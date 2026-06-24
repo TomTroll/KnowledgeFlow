@@ -10,7 +10,7 @@ KnowledgeFlow is a local-first web clipper that inserts semantic text snippets d
 
 | Layer              | Technology                                                        |
 | ------------------ | ----------------------------------------------------------------- |
-| Chrome Extension   | Manifest V3, TypeScript, strictly **Shadow DOM** for the UI to prevent CSS bleeding. |
+| Chrome Extension   | Manifest V3, TypeScript, strictly **Shadow DOM** for the UI to prevent CSS bleeding. The UI must include support for the **Web Speech API** to capture voice annotations. |
 | Obsidian Plugin    | Node.js, Electron, TypeScript.                                    |
 | Data Privacy       | 100% Local-first. Direct localhost communication between Chrome and Obsidian using a **Bearer token**. No third-party cloud accounts. |
 
@@ -19,7 +19,7 @@ KnowledgeFlow is a local-first web clipper that inserts semantic text snippets d
 ## 3. The AI Pipeline (4-API Call Limit)
 
 - Use **`text-embedding-004`** exclusively for vault indexing and vector creation.
-- Use **`gemini-1.5-flash`** exclusively for semantic context validation and routing.
+- Use **`gemini-1.5-flash`** exclusively for semantic context validation and routing. The prompt must ingest both the raw web clipping **AND** the user's contextual annotation to determine the precise target file and paragraph.
 - The pipeline must support an **array-batched semantic drill-down** (Sub-10ms search) and format the final insertion as an **Obsidian quote callout**.
 
 > [!IMPORTANT]
@@ -30,12 +30,20 @@ KnowledgeFlow is a local-first web clipper that inserts semantic text snippets d
 ## 4. The Primary User Flow
 
 ```
-1. TRIGGER  →  User highlights text and presses Cmd+Shift+S.
-2. PREVIEW  →  Inline Shadow DOM popup shows text preview.
-3. ROUTING  →  Local HTTP bridge sends data to Obsidian.
-                Plugin performs local cosine search + LLM validation.
-4. INSERT   →  Clip is inserted into the correct contextual
-                paragraph within the local markdown file.
+1. TRIGGER           →  User highlights text and presses Cmd+Shift+S.
+2. PREVIEW & ANNOTATE→  Inline Shadow DOM popup shows the text preview.
+                        The UI provides a text area and a microphone
+                        toggle (via Web Speech API or native macOS
+                        dictation) for the user to append intent
+                        (e.g., "Add this to the related work section
+                        for the Germany vs. US comparison").
+3. ROUTING           →  Local HTTP bridge sends the text payload AND
+                        the annotation to Obsidian. Plugin performs
+                        local cosine search + LLM validation using
+                        the combined context.
+4. INSERT            →  Clip is inserted into the correct contextual
+                        paragraph within the local markdown file,
+                        including the user's brief note.
 ```
 
 ### Sequence Diagram
@@ -50,6 +58,7 @@ sequenceDiagram
 
     User->>CS: Cmd+Shift+S (selected text)
     CS->>CS: Show Shadow DOM preview
+    User->>CS: Append annotation (text / voice)
     CS->>BG: chrome.runtime.sendMessage()
     BG->>OP: POST localhost (Bearer token)
     OP->>OP: Cosine similarity search
@@ -70,6 +79,7 @@ The following features are explicitly **out of scope** and must not be planned o
 - Canvas or infinite whiteboard integrations.
 - Image or PDF clipping.
 - Mobile support or cross-vault synchronization.
+- Complex audio-file routing (Voice must be transcribed to text in the browser before sending).
 
 ---
 

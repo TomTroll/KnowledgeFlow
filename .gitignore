@@ -1,0 +1,5 @@
+node_modules/
+KnowledgeFlow-Workspace/node_modules/
+KnowledgeFlow-Workspace/test-vault/
+KnowledgeFlow-Workspace/packages/obsidian-plugin/node_modules/
+KnowledgeFlow-Workspace/packages/obsidian-plugin/dist/

@@ -1,9 +1,0 @@
-{
-  "id": "knowledgeflow",
-  "name": "KnowledgeFlow",
-  "version": "0.1.0",
-  "minAppVersion": "1.0.0",
-  "description": "Local HTTP bridge and semantic vector engine for KnowledgeFlow web clips.",
-  "author": "",
-  "isDesktopOnly": true
-}

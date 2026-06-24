@@ -21,9 +21,11 @@ import {
 } from '@knowledgeflow/shared';
 import { createServer, type ServerDeps } from './server';
 import { KnowledgeFlowSettingTab } from './settings-tab';
+import { VectorStore } from './vector-store';
+import { VectorSync } from './vector-sync';
+import { getBatchEmbeddings } from './gemini-api';
 
 // Lazy imports — filled in by later issues:
-// import { VectorSync } from './vector-sync';
 // import { ClipLog } from './clip-log';
 // import { RoutingPipeline } from './routing-pipeline';
 
@@ -33,18 +35,40 @@ export default class KnowledgeFlowPlugin extends Plugin {
   settings: PluginSettings = { ...DEFAULT_PLUGIN_SETTINGS };
   private httpServer: http.Server | null = null;
 
+  private callsToday = 0;
+  private lastQuotaDate = '';
+  
+  private vectorStore!: VectorStore;
+  private vectorSync!: VectorSync;
+  
   // Filled in by later issues:
-  // private vectorSync: VectorSync;
   // private clipLog: ClipLog;
   // private routingPipeline: RoutingPipeline;
 
-  // Daily quota counter — persisted in plugin data, reset at UTC midnight
-  private callsToday = 0;
-  private lastQuotaDate = '';
 
   async onload(): Promise<void> {
     await this.loadSettings();
     this.addSettingTab(new KnowledgeFlowSettingTab(this.app, this));
+    
+    this.vectorStore = new VectorStore();
+    const statusBarItem = this.addStatusBarItem();
+    
+    this.vectorSync = new VectorSync({
+      vault: this.app.vault,
+      vectorStore: this.vectorStore,
+      getSettings: () => this.settings,
+      plugin: this,
+      statusBarItem,
+      embedder: async (texts: string[]) => {
+        const embeddings = await getBatchEmbeddings(texts, this.settings.geminiKey);
+        this.incrementApiCalls(1);
+        return embeddings;
+      },
+      getDailyQuotaRemaining: () => this.getDailyQuotaRemaining()
+    });
+    
+    this.vectorSync.start();
+    
     this.startServer();
   }
 
@@ -96,6 +120,11 @@ export default class KnowledgeFlowPlugin extends Plugin {
     this.saveSettings();
   }
 
+  getDailyQuotaRemaining(): number {
+    this.resetQuotaIfNewDay();
+    return Math.max(0, 1500 - this.callsToday);
+  }
+
   // ---------------------------------------------------------------------------
   // HTTP Server
   // ---------------------------------------------------------------------------
@@ -104,13 +133,10 @@ export default class KnowledgeFlowPlugin extends Plugin {
     return {
       getAuthHash: () => this.settings.authTokenHash,
       getPluginVersion: () => PLUGIN_VERSION,
-      getIsIndexing: () => false, // TODO: wire VectorSync.isIndexing
-      getCachedNoteCount: () => 0, // TODO: wire VectorStore.size
-      getDailyQuotaRemaining: () => {
-        this.resetQuotaIfNewDay();
-        return Math.max(0, 1500 - this.callsToday);
-      },
-      getLastIndexedAt: () => null, // TODO: wire VectorSync.lastIndexedAt
+      getIsIndexing: () => this.vectorSync?.isIndexing ?? false,
+      getCachedNoteCount: () => this.vectorStore?.size ?? 0,
+      getDailyQuotaRemaining: () => this.getDailyQuotaRemaining(),
+      getLastIndexedAt: () => this.vectorSync?.lastIndexedAt ?? null,
       getQueuedClipsCount: () => 0, // TODO: wire ClipQueue.size
       getRecentClips: (): ClipLogEntry[] => [], // TODO: wire ClipLog.getRecent
       handleClip: async (req: ClipRequest): Promise<ClipResponse | ClipQueuedResponse> => {

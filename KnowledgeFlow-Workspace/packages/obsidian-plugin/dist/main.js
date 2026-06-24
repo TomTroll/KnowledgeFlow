@@ -256,6 +256,237 @@ var KnowledgeFlowSettingTab = class extends import_obsidian.PluginSettingTab {
   }
 };
 
+// src/vector-store.ts
+var VectorStore = class {
+  constructor() {
+    this.cache = /* @__PURE__ */ new Map();
+  }
+  /** Number of entries currently in the store. */
+  get size() {
+    return this.cache.size;
+  }
+  /** Insert or replace an entry by vaultPath. */
+  upsert(entry) {
+    this.cache.set(entry.vaultPath, entry);
+  }
+  /** Remove an entry by vaultPath. No-op if not found. */
+  delete(vaultPath) {
+    this.cache.delete(vaultPath);
+  }
+  /** Return all entries as an array (order not guaranteed). */
+  getAll() {
+    return Array.from(this.cache.values());
+  }
+  /**
+   * Replace all entries atomically (used when deserializing the cache file
+   * on startup). Clears any existing in-memory state first.
+   */
+  loadAll(entries) {
+    this.cache.clear();
+    for (const e of entries) {
+      this.cache.set(e.vaultPath, e);
+    }
+  }
+  /**
+   * Linear cosine-similarity scan across all entries.
+   * Returns the top-k entries sorted by descending similarity.
+   *
+   * Both `queryVector` and stored embeddings are assumed to be pre-normalised.
+   * Cosine similarity reduces to a dot product for unit vectors.
+   */
+  findTopK(queryVector, k) {
+    const scored = [];
+    for (const entry of this.cache.values()) {
+      const similarity = dotProduct(queryVector, entry.embedding);
+      scored.push({ ...entry, similarity });
+    }
+    scored.sort((a, b) => b.similarity - a.similarity);
+    return scored.slice(0, k);
+  }
+};
+function dotProduct(a, b) {
+  let sum = 0;
+  const len = Math.min(a.length, b.length);
+  for (let i = 0; i < len; i++) {
+    sum += a[i] * b[i];
+  }
+  return sum;
+}
+
+// src/vector-sync.ts
+var VectorSync = class {
+  constructor(deps) {
+    this.isIndexing = false;
+    this.lastIndexedAt = null;
+    this.debounceTimers = /* @__PURE__ */ new Map();
+    this.vault = deps.vault;
+    this.vectorStore = deps.vectorStore;
+    this.getSettings = deps.getSettings;
+    this.plugin = deps.plugin;
+    this.statusBarItem = deps.statusBarItem;
+    this.embedder = deps.embedder;
+    this.getDailyQuotaRemaining = deps.getDailyQuotaRemaining;
+    this.cachePath = this.plugin.manifest.dir + "/vector-cache.json";
+    this.registerEvents();
+  }
+  registerEvents() {
+    this.plugin.registerEvent(this.vault.on("modify", (file) => {
+      if (!("extension" in file) || file.extension !== "md") return;
+      if (!this.getSettings().autoSyncEnabled) return;
+      const existingTimer = this.debounceTimers.get(file.path);
+      if (existingTimer) clearTimeout(existingTimer);
+      const timer = setTimeout(() => {
+        this.batchEmbed([file]).catch((e) => {
+          console.error("Failed to embed modified file", e);
+          this.setStatus("offline");
+        });
+        this.debounceTimers.delete(file.path);
+      }, 5e3);
+      this.debounceTimers.set(file.path, timer);
+    }));
+    this.plugin.registerEvent(this.vault.on("create", (file) => {
+      if (!("extension" in file) || file.extension !== "md") return;
+      if (!this.getSettings().autoSyncEnabled) return;
+      this.batchEmbed([file]).catch((e) => {
+        console.error("Failed to embed new file", e);
+        this.setStatus("offline");
+      });
+    }));
+    this.plugin.registerEvent(this.vault.on("delete", (file) => {
+      if (!("extension" in file) || file.extension !== "md") return;
+      this.vectorStore.delete(file.path);
+      this.saveCache();
+    }));
+  }
+  async start() {
+    this.setStatus("syncing");
+    await this.loadCache();
+    const files = this.vault.getMarkdownFiles();
+    const toEmbed = [];
+    for (const file of files) {
+      const entry = this.vectorStore.getAll().find((e) => e.vaultPath === file.path);
+      if (!entry || file.stat.mtime > entry.updatedAt) {
+        toEmbed.push(file);
+      }
+    }
+    try {
+      if (toEmbed.length > 0) {
+        await this.batchEmbed(toEmbed);
+      }
+      this.setStatus("synced");
+    } catch (e) {
+      console.error("Vector sync failed on startup:", e);
+      this.setStatus("offline");
+    }
+  }
+  async loadCache() {
+    try {
+      if (await this.vault.adapter.exists(this.cachePath)) {
+        const data = await this.vault.adapter.read(this.cachePath);
+        if (data) {
+          const entries = JSON.parse(data);
+          this.vectorStore.loadAll(entries);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load vector cache", e);
+    }
+  }
+  async saveCache() {
+    try {
+      const data = JSON.stringify(this.vectorStore.getAll());
+      await this.vault.adapter.write(this.cachePath, data);
+    } catch (e) {
+      console.error("Failed to save vector cache", e);
+    }
+  }
+  async batchEmbed(files) {
+    const texts = await Promise.all(files.map(async (file) => {
+      const content = await this.vault.read(file);
+      const stripped = this.stripFrontmatter(content);
+      const words = stripped.split(/\s+/).slice(0, 200).join(" ");
+      return file.basename + "\n" + words;
+    }));
+    for (let i = 0; i < texts.length; i += 100) {
+      const batchTexts = texts.slice(i, i + 100);
+      const batchFiles = files.slice(i, i + 100);
+      const embeddings = await this.embedder(batchTexts);
+      for (let j = 0; j < batchFiles.length; j++) {
+        const file = batchFiles[j];
+        this.vectorStore.upsert({
+          vaultPath: file.path,
+          title: file.basename,
+          embedding: embeddings[j],
+          updatedAt: file.stat.mtime
+        });
+      }
+      await this.saveCache();
+    }
+  }
+  stripFrontmatter(content) {
+    const match = content.match(/^---\n[\s\S]*?\n---\n/);
+    if (match) {
+      return content.slice(match[0].length);
+    }
+    return content;
+  }
+  setStatus(state) {
+    if (state === "syncing") {
+      this.isIndexing = true;
+      this.statusBarItem.setText("\u23F3 syncing");
+    } else if (state === "synced") {
+      this.isIndexing = false;
+      this.lastIndexedAt = (/* @__PURE__ */ new Date()).toISOString();
+      this.statusBarItem.setText("\u2705 synced");
+    } else {
+      this.isIndexing = false;
+      this.statusBarItem.setText("\u26D4 offline");
+    }
+    this.updateTooltip();
+  }
+  updateTooltip() {
+    const quota = this.getDailyQuotaRemaining().toLocaleString("en-US");
+    const count = this.vectorStore.size.toLocaleString("en-US");
+    const lastDate = this.lastIndexedAt ? new Date(this.lastIndexedAt).toLocaleTimeString("en-US") : "Never";
+    const tooltip = `Last indexed: ${lastDate}
+${count} notes cached
+${quota} API calls remaining today`;
+    this.statusBarItem.setAttribute("aria-label", tooltip);
+  }
+};
+
+// src/gemini-api.ts
+async function getBatchEmbeddings(texts, apiKey) {
+  if (!apiKey) {
+    throw new Error("Gemini API key is not configured.");
+  }
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:batchEmbedContents?key=${apiKey}`;
+  const body = {
+    requests: texts.map((text) => ({
+      model: "models/gemini-embedding-2",
+      content: {
+        parts: [{ text }]
+      }
+    }))
+  };
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Gemini API error (${response.status}): ${errText}`);
+  }
+  const data = await response.json();
+  if (!data.embeddings || !Array.isArray(data.embeddings)) {
+    throw new Error("Invalid response from Gemini API");
+  }
+  return data.embeddings.map((e) => e.values);
+}
+
 // src/main.ts
 var PLUGIN_VERSION = "0.1.0";
 var KnowledgeFlowPlugin = class extends import_obsidian2.Plugin {
@@ -263,17 +494,31 @@ var KnowledgeFlowPlugin = class extends import_obsidian2.Plugin {
     super(...arguments);
     this.settings = { ...DEFAULT_PLUGIN_SETTINGS };
     this.httpServer = null;
-    // Filled in by later issues:
-    // private vectorSync: VectorSync;
-    // private clipLog: ClipLog;
-    // private routingPipeline: RoutingPipeline;
-    // Daily quota counter — persisted in plugin data, reset at UTC midnight
     this.callsToday = 0;
     this.lastQuotaDate = "";
   }
+  // Filled in by later issues:
+  // private clipLog: ClipLog;
+  // private routingPipeline: RoutingPipeline;
   async onload() {
     await this.loadSettings();
     this.addSettingTab(new KnowledgeFlowSettingTab(this.app, this));
+    this.vectorStore = new VectorStore();
+    const statusBarItem = this.addStatusBarItem();
+    this.vectorSync = new VectorSync({
+      vault: this.app.vault,
+      vectorStore: this.vectorStore,
+      getSettings: () => this.settings,
+      plugin: this,
+      statusBarItem,
+      embedder: async (texts) => {
+        const embeddings = await getBatchEmbeddings(texts, this.settings.geminiKey);
+        this.incrementApiCalls(1);
+        return embeddings;
+      },
+      getDailyQuotaRemaining: () => this.getDailyQuotaRemaining()
+    });
+    this.vectorSync.start();
     this.startServer();
   }
   onunload() {
@@ -312,6 +557,10 @@ var KnowledgeFlowPlugin = class extends import_obsidian2.Plugin {
     this.callsToday += n;
     this.saveSettings();
   }
+  getDailyQuotaRemaining() {
+    this.resetQuotaIfNewDay();
+    return Math.max(0, 1500 - this.callsToday);
+  }
   // ---------------------------------------------------------------------------
   // HTTP Server
   // ---------------------------------------------------------------------------
@@ -319,16 +568,10 @@ var KnowledgeFlowPlugin = class extends import_obsidian2.Plugin {
     return {
       getAuthHash: () => this.settings.authTokenHash,
       getPluginVersion: () => PLUGIN_VERSION,
-      getIsIndexing: () => false,
-      // TODO: wire VectorSync.isIndexing
-      getCachedNoteCount: () => 0,
-      // TODO: wire VectorStore.size
-      getDailyQuotaRemaining: () => {
-        this.resetQuotaIfNewDay();
-        return Math.max(0, 1500 - this.callsToday);
-      },
-      getLastIndexedAt: () => null,
-      // TODO: wire VectorSync.lastIndexedAt
+      getIsIndexing: () => this.vectorSync?.isIndexing ?? false,
+      getCachedNoteCount: () => this.vectorStore?.size ?? 0,
+      getDailyQuotaRemaining: () => this.getDailyQuotaRemaining(),
+      getLastIndexedAt: () => this.vectorSync?.lastIndexedAt ?? null,
       getQueuedClipsCount: () => 0,
       // TODO: wire ClipQueue.size
       getRecentClips: () => [],

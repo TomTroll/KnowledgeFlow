@@ -77,29 +77,84 @@ The following features are explicitly **out of scope** and must not be planned o
 
 ```
 KnowledgeFlow-Workspace/
-├── chrome-extension/          # Manifest V3 Chrome Extension
-│   ├── src/
-│   │   ├── background.ts      # Service worker: lifecycle, shortcuts, bridge comms
-│   │   ├── content.ts         # Content script: selection capture, Shadow DOM
-│   │   └── ui/
-│   │       ├── preview.ts     # Shadow DOM preview popup component
-│   │       └── style.css      # Scoped styles (Shadow DOM isolated)
-│   ├── dist/                  # Compiled output
-│   ├── manifest.json          # Chrome Extension Manifest V3
-│   ├── package.json
-│   └── tsconfig.json
-├── obsidian-plugin/           # Obsidian Plugin (desktop only)
-│   ├── src/
-│   │   ├── main.ts            # Plugin entry: HTTP server, token lifecycle
-│   │   ├── vector-sync.ts     # Vector indexing & cosine search engine
-│   │   └── gemini-api.ts      # Gemini API client (flash + embedding)
-│   ├── esbuild.config.mjs     # Bundler config → main.js
-│   ├── manifest.json          # Obsidian plugin manifest
-│   ├── package.json
-│   └── tsconfig.json
-├── test-vault/                # Local Obsidian vault for development testing
+├── packages/
+│   ├── shared/                    # @knowledgeflow/shared — Shared TypeScript types
+│   │   ├── src/
+│   │   │   ├── index.ts           # Barrel export
+│   │   │   └── types.ts           # ClipRequest, ClipResponse, ClipLogEntry, etc.
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   ├── chrome-extension/          # @knowledgeflow/chrome-extension — Manifest V3
+│   │   ├── src/
+│   │   │   ├── background.ts      # Service worker: lifecycle, shortcuts, bridge comms
+│   │   │   ├── content.ts         # Content script: selection capture, Shadow DOM
+│   │   │   ├── popup.ts           # Action popup: clip history, Obsidian Offline state
+│   │   │   ├── options.ts         # Options page: port, token, Test Connection
+│   │   │   └── ui/
+│   │   │       ├── preview.ts     # Shadow DOM preview popup component
+│   │   │       └── style.css      # Scoped styles (Shadow DOM isolated)
+│   │   ├── dist/                  # Compiled output (git-ignored)
+│   │   ├── popup.html             # Action popup shell
+│   │   ├── options.html           # Options page shell
+│   │   ├── manifest.json          # Chrome Extension Manifest V3
+│   │   ├── esbuild.config.mjs     # Multi-entrypoint bundler config
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   └── obsidian-plugin/           # @knowledgeflow/obsidian-plugin — desktop only
+│       ├── src/
+│       │   ├── main.ts            # Plugin entry: HTTP server, token lifecycle
+│       │   ├── vector-sync.ts     # Vector indexing & cosine search engine
+│       │   └── gemini-api.ts      # Gemini API client (flash + embedding)
+│       ├── dist/                  # Compiled output (git-ignored)
+│       ├── esbuild.config.mjs     # Bundler config → dist/main.js
+│       ├── manifest.json          # Obsidian plugin manifest
+│       ├── package.json
+│       └── tsconfig.json
+├── test-vault/                    # Local Obsidian vault for development testing
 │   └── .obsidian/
-├── .agent/                    # Agent configuration & skills
-│   └── skills/
-└── README.md                  # ← This file (Project Constitution)
+├── package.json                   # npm workspaces root
+├── tsconfig.json                  # Root TypeScript config with path aliases
+├── prd.md                         # Product Requirements Document
+└── README.md                      # ← This file (Project Constitution)
 ```
+
+---
+
+## 7. Development Scripts
+
+Run all commands from the **workspace root** (`KnowledgeFlow-Workspace/`).
+
+```bash
+# Install all dependencies across all packages
+npm install
+
+# Build all packages
+npm run build
+
+# Build a specific package
+npm run build:extension
+npm run build:plugin
+
+# Watch mode (rebuilds on file change)
+npm run dev:extension
+npm run dev:plugin
+
+# Run all tests
+npm run test
+
+# Run tests for a specific package
+npm run test:extension
+npm run test:plugin
+```
+
+---
+
+## 8. Shared Types
+
+All type contracts between the extension and plugin are in **`packages/shared/src/types.ts`** and imported as:
+
+```typescript
+import type { ClipRequest, ClipLogEntry } from '@knowledgeflow/shared';
+```
+
+Never duplicate types between packages. The shared package is the single source of truth.

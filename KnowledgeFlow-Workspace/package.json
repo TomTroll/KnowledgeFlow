@@ -1,0 +1,21 @@
+{
+  "name": "knowledgeflow",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "build:extension": "npm run build --workspace=packages/chrome-extension",
+    "build:plugin": "npm run build --workspace=packages/obsidian-plugin",
+    "dev:extension": "npm run dev --workspace=packages/chrome-extension",
+    "dev:plugin": "npm run dev --workspace=packages/obsidian-plugin",
+    "test": "npm run test --workspaces --if-present",
+    "test:extension": "npm run test --workspace=packages/chrome-extension",
+    "test:plugin": "npm run test --workspace=packages/obsidian-plugin"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

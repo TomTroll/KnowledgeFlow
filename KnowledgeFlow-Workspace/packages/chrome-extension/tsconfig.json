@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "outDir": "./dist",
+    "types": ["chrome"],
+    "paths": {
+      "@knowledgeflow/shared": ["../shared/src/index.ts"],
+      "@knowledgeflow/shared/*": ["../shared/src/*"]
+    }
+  },
+  "include": ["src/**/*", "../shared/src/**/*"]
+}

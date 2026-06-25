@@ -1,5 +1,6 @@
 node_modules/
-KnowledgeFlow-Workspace/node_modules/
-KnowledgeFlow-Workspace/test-vault/
-KnowledgeFlow-Workspace/packages/obsidian-plugin/node_modules/
-KnowledgeFlow-Workspace/packages/obsidian-plugin/dist/
+test-vault/
+packages/obsidian-plugin/node_modules/
+packages/obsidian-plugin/dist/
+packages/chrome-extension/node_modules/
+packages/chrome-extension/dist/

@@ -31,6 +31,14 @@ export class ClipLog {
     this.entries = [...entries];
   }
 
+  /** Update fields on an existing entry by id. Returns true if found. */
+  updateEntry(id: string, patch: Partial<ClipLogEntry>): boolean {
+    const entry = this.entries.find(e => e.id === id);
+    if (!entry) return false;
+    Object.assign(entry, patch);
+    return true;
+  }
+
   /** Number of entries in the log. */
   get size(): number {
     return this.entries.length;

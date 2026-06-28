@@ -26,6 +26,7 @@ import {
   insertCalloutAfterParagraph,
 } from './markdown-parser';
 import type { FlashCandidate, FlashValidationResult } from './gemini-flash';
+import { dotProduct } from './math-utils';
 
 // ---------------------------------------------------------------------------
 // Dependency interface (injected by Plugin, stubbed in tests)
@@ -168,10 +169,6 @@ export class RoutingPipeline {
           bestParaIdx = i;
         }
       }
-    } else {
-      // Single paragraph — still make the batch call for consistency
-      await this.deps.embedder(paragraphs);
-      bestParaIdx = 0;
     }
 
     // ------------------------------------------------------------------
@@ -246,17 +243,4 @@ export class RoutingPipeline {
       status: 'inserted',
     });
   }
-}
-
-// ---------------------------------------------------------------------------
-// Internal helpers
-// ---------------------------------------------------------------------------
-
-function dotProduct(a: number[], b: number[]): number {
-  let sum = 0;
-  const len = Math.min(a.length, b.length);
-  for (let i = 0; i < len; i++) {
-    sum += a[i] * b[i];
-  }
-  return sum;
 }

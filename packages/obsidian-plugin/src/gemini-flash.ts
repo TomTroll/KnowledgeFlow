@@ -6,7 +6,7 @@
 // suggested title for below-threshold new-note creation.
 
 import { FLASH_MODEL } from './gemini-models';
-import { GeminiRateLimitError } from './gemini-api';
+import { GeminiRateLimitError, throwIfRateLimited } from './gemini-api';
 
 export interface FlashCandidate {
   path: string;
@@ -81,11 +81,8 @@ Respond ONLY with valid JSON matching this schema:
   });
 
   if (!response.ok) {
+    await throwIfRateLimited(response);
     const errText = await response.text();
-    if (response.status === 429) {
-      const retryAfterSec = parseInt(response.headers.get('Retry-After') || '60', 10);
-      throw new GeminiRateLimitError(`Rate limit hit: ${errText}`, retryAfterSec * 1000);
-    }
     throw new Error(`Gemini Flash error (${response.status}): ${errText}`);
   }
 

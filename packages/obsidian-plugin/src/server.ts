@@ -98,7 +98,7 @@ export function createServer(deps: ServerDeps): http.Server {
       // GET /status
       // ------------------------------------------------------------------
       if (method === 'GET' && pathname === '/status') {
-        const body: StatusResponse & { queuedClips: number } = {
+        const body: StatusResponse = {
           pluginVersion: deps.getPluginVersion(),
           isIndexing: deps.getIsIndexing(),
           cachedNoteCount: deps.getCachedNoteCount(),

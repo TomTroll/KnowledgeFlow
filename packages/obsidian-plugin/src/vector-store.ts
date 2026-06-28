@@ -7,6 +7,7 @@
 //   - No external dependencies; pure TypeScript.
 
 import type { VectorCacheEntry } from '@knowledgeflow/shared';
+import { dotProduct } from './math-utils';
 
 export interface ScoredEntry extends VectorCacheEntry {
   similarity: number;
@@ -28,6 +29,11 @@ export class VectorStore {
   /** Remove an entry by vaultPath. No-op if not found. */
   delete(vaultPath: string): void {
     this.cache.delete(vaultPath);
+  }
+
+  /** Look up a single entry by vaultPath. O(1). */
+  get(vaultPath: string): VectorCacheEntry | undefined {
+    return this.cache.get(vaultPath);
   }
 
   /** Return all entries as an array (order not guaranteed). */
@@ -66,18 +72,4 @@ export class VectorStore {
 
     return scored.slice(0, k);
   }
-}
-
-// ---------------------------------------------------------------------------
-// Internal helpers
-// ---------------------------------------------------------------------------
-
-/** Dot product of two equal-length vectors. */
-function dotProduct(a: number[], b: number[]): number {
-  let sum = 0;
-  const len = Math.min(a.length, b.length);
-  for (let i = 0; i < len; i++) {
-    sum += a[i] * b[i];
-  }
-  return sum;
 }

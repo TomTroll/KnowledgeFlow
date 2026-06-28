@@ -1,6 +1,6 @@
 // KnowledgeFlow – Gemini API Client
-// Handles calls to gemini-1.5-flash for semantic context
-// validation and intelligent clip routing.
+// Handles calls to the Gemini batch embedding API (via EMBEDDING_MODEL)
+// and exports the shared GeminiRateLimitError for 429 handling.
 
 import { EMBEDDING_MODEL } from './gemini-models';
 
@@ -10,6 +10,18 @@ export class GeminiRateLimitError extends Error {
     super(message);
     this.name = 'GeminiRateLimitError';
     this.retryAfterMs = retryAfterMs;
+  }
+}
+
+/**
+ * Check a Gemini API response for 429 rate limiting and throw
+ * GeminiRateLimitError if detected. Reusable across all Gemini endpoints.
+ */
+export async function throwIfRateLimited(response: Response): Promise<void> {
+  if (response.status === 429) {
+    const errText = await response.text();
+    const retryAfterSec = parseInt(response.headers.get('Retry-After') || '60', 10);
+    throw new GeminiRateLimitError(`Rate limit hit: ${errText}`, retryAfterSec * 1000);
   }
 }
 
@@ -38,12 +50,8 @@ export async function getBatchEmbeddings(texts: string[], apiKey: string): Promi
   });
 
   if (!response.ok) {
+    await throwIfRateLimited(response);
     const errText = await response.text();
-    if (response.status === 429) {
-      // Default to 60s if header is missing
-      const retryAfterSec = parseInt(response.headers.get('Retry-After') || '60', 10);
-      throw new GeminiRateLimitError(`Rate limit hit: ${errText}`, retryAfterSec * 1000);
-    }
     throw new Error(`Gemini API error (${response.status}): ${errText}`);
   }
 

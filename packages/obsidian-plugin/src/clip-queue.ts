@@ -36,16 +36,11 @@ export class ClipQueue {
       if (!isInitial) {
         this.queue.delete(clipId);
         
-        // Find in log and update status
-        const entries = this.clipLog.getAll();
-        const entry = entries.find(e => e.id === clipId);
-        if (entry) {
-          entry.status = 'inserted';
-          entry.matchedPath = response.matchedPath;
-          // Force update the array in clipLog
-          this.clipLog.loadAll(entries);
-          this.persist();
-        }
+        this.clipLog.updateEntry(clipId, {
+          status: 'inserted',
+          matchedPath: response.matchedPath,
+        });
+        this.persist();
       }
       
       return response;

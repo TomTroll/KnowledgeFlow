@@ -156,7 +156,7 @@ export class ClipHistoryView extends ItemView {
     });
 
     if (success) {
-      clip.status = 'undone';
+      this.plugin.clipLog.updateEntry(clip.id, { status: 'undone' });
       await this.plugin.saveSettings();
       new Notice('Clip undone successfully.');
       this.renderList();
@@ -200,8 +200,10 @@ export class ClipHistoryView extends ItemView {
       });
 
       // Update log
-      clip.status = 'relocated';
-      clip.matchedPath = newFile.path;
+      this.plugin.clipLog.updateEntry(clip.id, {
+        status: 'relocated',
+        matchedPath: newFile.path,
+      });
       await this.plugin.saveSettings();
       new Notice(`Clip relocated to ${newFile.path}`);
       this.renderList();

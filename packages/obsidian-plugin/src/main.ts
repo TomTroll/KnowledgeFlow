@@ -10,7 +10,7 @@
 //       respective modules as they are implemented in subsequent issues.)
 
 import http from 'http';
-import { Plugin, Notice } from 'obsidian';
+import { Plugin, Notice, WorkspaceLeaf } from 'obsidian';
 import {
   DEFAULT_PLUGIN_SETTINGS,
   type PluginSettings,
@@ -70,25 +70,21 @@ export default class KnowledgeFlowPlugin extends Plugin {
     this.vectorStore = new VectorStore();
     const statusBarItem = this.addStatusBarItem();
     
+    const embedder = async (texts: string[]) => {
+      const embeddings = await getBatchEmbeddings(texts, this.settings.geminiKey);
+      this.incrementApiCalls(1);
+      return embeddings;
+    };
+    
     this.vectorSync = new VectorSync({
       vault: this.app.vault,
       vectorStore: this.vectorStore,
       getSettings: () => this.settings,
       plugin: this,
       statusBarItem,
-      embedder: async (texts: string[]) => {
-        const embeddings = await getBatchEmbeddings(texts, this.settings.geminiKey);
-        this.incrementApiCalls(1);
-        return embeddings;
-      },
+      embedder,
       getDailyQuotaRemaining: () => this.getDailyQuotaRemaining()
     });
-    
-    const embedder = async (texts: string[]) => {
-      const embeddings = await getBatchEmbeddings(texts, this.settings.geminiKey);
-      this.incrementApiCalls(1);
-      return embeddings;
-    };
     
     this.routingPipeline = new RoutingPipeline({
       embedder,

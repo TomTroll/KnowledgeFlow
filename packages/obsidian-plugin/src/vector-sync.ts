@@ -86,8 +86,8 @@ export class VectorSync {
     
     // Find completely new or modified files
     for (const file of files) {
-      // Find existing entry in vectorStore by vaultPath
-      const entry = this.vectorStore.getAll().find(e => e.vaultPath === file.path);
+      // Look up existing entry by O(1) Map access instead of O(n) scan
+      const entry = this.vectorStore.get(file.path);
       if (!entry || file.stat.mtime > entry.updatedAt) {
         toEmbed.push(file);
       }
@@ -156,7 +156,6 @@ export class VectorSync {
     }
   }
 
-  // stripFrontmatter is imported from markdown-parser.ts
   
   private setStatus(state: 'syncing' | 'synced' | 'offline') {
     if (state === 'syncing') {

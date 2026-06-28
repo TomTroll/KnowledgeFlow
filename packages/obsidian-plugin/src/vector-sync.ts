@@ -1,6 +1,7 @@
 import { Vault, TFile, Plugin, TAbstractFile } from 'obsidian';
 import { VectorStore } from './vector-store';
 import { PluginSettings, VectorCacheEntry } from '@knowledgeflow/shared';
+import { stripFrontmatter } from './markdown-parser';
 
 export interface VectorSyncDeps {
   vault: Vault;
@@ -130,7 +131,7 @@ export class VectorSync {
     // Only fetch content up to 200 words, strip frontmatter
     const texts = await Promise.all(files.map(async file => {
       const content = await this.vault.read(file);
-      const stripped = this.stripFrontmatter(content);
+      const stripped = stripFrontmatter(content);
       const words = stripped.split(/\s+/).slice(0, 200).join(' ');
       return file.basename + '\n' + words;
     }));
@@ -155,13 +156,7 @@ export class VectorSync {
     }
   }
 
-  private stripFrontmatter(content: string): string {
-    const match = content.match(/^---\n[\s\S]*?\n---\n/);
-    if (match) {
-      return content.slice(match[0].length);
-    }
-    return content;
-  }
+  // stripFrontmatter is imported from markdown-parser.ts
   
   private setStatus(state: 'syncing' | 'synced' | 'offline') {
     if (state === 'syncing') {

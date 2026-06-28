@@ -28,7 +28,7 @@ export interface VectorCacheEntry {
 // ---------------------------------------------------------------------------
 
 /** Lifecycle status of a clip after insertion. */
-export type ClipStatus = 'inserted' | 'undone' | 'relocated';
+export type ClipStatus = 'inserted' | 'undone' | 'relocated' | 'queued';
 
 /**
  * Persisted log entry for every clip that has been processed.
@@ -128,6 +128,8 @@ export interface StatusResponse {
   dailyQuotaRemaining: number;
   /** ISO 8601 timestamp of the last completed index run */
   lastIndexedAt: string | null;
+  /** Number of clips currently waiting in the retry queue due to rate limits */
+  queuedClips: number;
 }
 
 // ---------------------------------------------------------------------------

@@ -12,6 +12,7 @@
 import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
 import type KnowledgeFlowPlugin from './main';
 import { hashToken } from './auth';
+import { EMBEDDING_MODEL } from './gemini-models';
 
 export class KnowledgeFlowSettingTab extends PluginSettingTab {
   plugin: KnowledgeFlowPlugin;
@@ -53,12 +54,12 @@ export class KnowledgeFlowSettingTab extends PluginSettingTab {
           }
           try {
             const resp = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${key}`,
+              `https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:embedContent?key=${key}`,
               {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  model: 'models/text-embedding-004',
+                  model: `models/${EMBEDDING_MODEL}`,
                   content: { parts: [{ text: 'KnowledgeFlow key check' }] },
                 }),
               },

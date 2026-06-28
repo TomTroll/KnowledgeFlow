@@ -24,10 +24,11 @@ import { KnowledgeFlowSettingTab } from './settings-tab';
 import { VectorStore } from './vector-store';
 import { VectorSync } from './vector-sync';
 import { getBatchEmbeddings } from './gemini-api';
-
-// Lazy imports — filled in by later issues:
-// import { ClipLog } from './clip-log';
-// import { RoutingPipeline } from './routing-pipeline';
+import { validateWithFlash } from './gemini-flash';
+import { ClipLog } from './clip-log';
+import { RoutingPipeline } from './routing-pipeline';
+import { ClipQueue } from './clip-queue';
+import { ClipHistoryView, CLIP_HISTORY_VIEW_TYPE } from './ui/clip-history-view';
 
 const PLUGIN_VERSION = '0.1.0';
 
@@ -40,16 +41,32 @@ export default class KnowledgeFlowPlugin extends Plugin {
   
   private vectorStore!: VectorStore;
   private vectorSync!: VectorSync;
-  
-  // Filled in by later issues:
-  // private clipLog: ClipLog;
-  // private routingPipeline: RoutingPipeline;
+  private clipLog!: ClipLog;
+  private routingPipeline!: RoutingPipeline;
+  private clipQueue!: ClipQueue;
 
 
   async onload(): Promise<void> {
     await this.loadSettings();
     this.addSettingTab(new KnowledgeFlowSettingTab(this.app, this));
     
+    this.registerView(
+      CLIP_HISTORY_VIEW_TYPE,
+      (leaf) => new ClipHistoryView(leaf, this)
+    );
+    
+    this.addRibbonIcon('history', 'KnowledgeFlow Clip History', () => {
+      this.activateHistoryView();
+    });
+    
+    this.addCommand({
+      id: 'open-clip-history',
+      name: 'Open Clip History',
+      callback: () => {
+        this.activateHistoryView();
+      }
+    });
+
     this.vectorStore = new VectorStore();
     const statusBarItem = this.addStatusBarItem();
     
@@ -66,6 +83,27 @@ export default class KnowledgeFlowPlugin extends Plugin {
       },
       getDailyQuotaRemaining: () => this.getDailyQuotaRemaining()
     });
+    
+    const embedder = async (texts: string[]) => {
+      const embeddings = await getBatchEmbeddings(texts, this.settings.geminiKey);
+      this.incrementApiCalls(1);
+      return embeddings;
+    };
+    
+    this.routingPipeline = new RoutingPipeline({
+      embedder,
+      flashValidator: validateWithFlash,
+      vectorStore: this.vectorStore,
+      clipLog: this.clipLog,
+      vault: this.app.vault,
+      getSettings: () => this.settings,
+    });
+    
+    this.clipQueue = new ClipQueue(
+      (req, clipId) => this.routingPipeline.process(req, clipId),
+      this.clipLog,
+      () => this.saveSettings()
+    );
     
     this.vectorSync.start();
     
@@ -91,6 +129,12 @@ export default class KnowledgeFlowPlugin extends Plugin {
     this.settings = Object.assign({}, DEFAULT_PLUGIN_SETTINGS, settingsSource);
     this.callsToday = (saved as { callsToday?: number } | null)?.callsToday ?? 0;
     this.lastQuotaDate = (saved as { lastQuotaDate?: string } | null)?.lastQuotaDate ?? '';
+    
+    if (!this.clipLog) {
+      this.clipLog = new ClipLog();
+    }
+    this.clipLog.loadAll((saved as any)?.clipLog ?? []);
+    
     this.resetQuotaIfNewDay();
   }
 
@@ -99,6 +143,7 @@ export default class KnowledgeFlowPlugin extends Plugin {
       settings: this.settings,
       callsToday: this.callsToday,
       lastQuotaDate: this.lastQuotaDate,
+      clipLog: this.clipLog ? this.clipLog.getAll() : [],
     });
   }
 
@@ -126,6 +171,33 @@ export default class KnowledgeFlowPlugin extends Plugin {
   }
 
   // ---------------------------------------------------------------------------
+  // View Management
+  // ---------------------------------------------------------------------------
+
+  async activateHistoryView() {
+    const { workspace } = this.app;
+    
+    let leaf: WorkspaceLeaf | null = null;
+    const leaves = workspace.getLeavesOfType(CLIP_HISTORY_VIEW_TYPE);
+    
+    if (leaves.length > 0) {
+      // View is already open, just focus it
+      leaf = leaves[0];
+    } else {
+      // Create a new leaf in the right sidebar
+      const rightLeaf = workspace.getRightLeaf(false);
+      if (rightLeaf) {
+        leaf = rightLeaf;
+        await leaf.setViewState({ type: CLIP_HISTORY_VIEW_TYPE, active: true });
+      }
+    }
+    
+    if (leaf) {
+      workspace.revealLeaf(leaf);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // HTTP Server
   // ---------------------------------------------------------------------------
 
@@ -137,17 +209,10 @@ export default class KnowledgeFlowPlugin extends Plugin {
       getCachedNoteCount: () => this.vectorStore?.size ?? 0,
       getDailyQuotaRemaining: () => this.getDailyQuotaRemaining(),
       getLastIndexedAt: () => this.vectorSync?.lastIndexedAt ?? null,
-      getQueuedClipsCount: () => 0, // TODO: wire ClipQueue.size
-      getRecentClips: (): ClipLogEntry[] => [], // TODO: wire ClipLog.getRecent
+      getQueuedClipsCount: () => this.clipQueue?.size ?? 0,
+      getRecentClips: (): ClipLogEntry[] => this.clipLog?.getRecent() ?? [],
       handleClip: async (req: ClipRequest): Promise<ClipResponse | ClipQueuedResponse> => {
-        // TODO: wire RoutingPipeline.process(req)
-        // Stub response for now — replaced in Issue #4
-        return {
-          success: true,
-          clipId: crypto.randomUUID(),
-          matchedPath: '',
-          justification: null,
-        };
+        return this.clipQueue.handleClip(req);
       },
     };
   }

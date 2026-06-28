@@ -18,8 +18,8 @@ KnowledgeFlow is a local-first web clipper that inserts semantic text snippets d
 
 ## 3. The AI Pipeline (4-API Call Limit)
 
-- Use **`text-embedding-004`** exclusively for vault indexing and vector creation.
-- Use **`gemini-1.5-flash`** exclusively for semantic context validation and routing. The prompt must ingest both the raw web clipping **AND** the user's contextual annotation to determine the precise target file and paragraph.
+- Use **`gemini-embedding-2`** exclusively for vault indexing and vector creation.
+- Use **`gemini-2.0-flash`** exclusively for semantic context validation and routing. The prompt must ingest both the raw web clipping **AND** the user's contextual annotation to determine the precise target file and paragraph.
 - The pipeline must support an **array-batched semantic drill-down** (Sub-10ms search) and format the final insertion as an **Obsidian quote callout**.
 
 > [!IMPORTANT]
@@ -62,7 +62,7 @@ sequenceDiagram
     CS->>BG: chrome.runtime.sendMessage()
     BG->>OP: POST localhost (Bearer token)
     OP->>OP: Cosine similarity search
-    OP->>AI: Validate context (gemini-1.5-flash)
+    OP->>AI: Validate context (gemini-2.0-flash)
     AI-->>OP: Validated target paragraph
     OP->>OP: Insert callout into .md file
     OP-->>BG: 200 OK (insertion result)

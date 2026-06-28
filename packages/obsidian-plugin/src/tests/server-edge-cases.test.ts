@@ -38,7 +38,7 @@ let baseUrl: string;
 beforeAll(async () => {
   storedHash = await hashToken(RAW_TOKEN);
   server = createServer(makeStubDeps());
-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  await new Promise<void>((resolve) => server.listen(0, () => resolve()));
   const { port } = server.address() as { port: number };
   baseUrl = `http://127.0.0.1:${port}`;
 });
@@ -116,7 +116,7 @@ describe('handleClip error propagation', () => {
         },
       }),
     );
-    await new Promise<void>((r) => brokenServer.listen(0, '127.0.0.1', r));
+    await new Promise<void>((r) => brokenServer.listen(0, () => r()));
     const { port } = brokenServer.address() as { port: number };
 
     const res = await fetch(`http://127.0.0.1:${port}/clip`, {

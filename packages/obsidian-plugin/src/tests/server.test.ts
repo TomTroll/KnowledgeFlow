@@ -55,7 +55,7 @@ beforeAll(async () => {
   storedHash = await hashToken(RAW_TOKEN);
   server = createServer(makeStubDeps());
   await new Promise<void>((resolve) => {
-    server.listen(0, '127.0.0.1', () => resolve());
+    server.listen(0, () => resolve());
   });
   const address = server.address() as { port: number };
   baseUrl = `http://127.0.0.1:${address.port}`;
@@ -137,7 +137,7 @@ describe('GET /clips', () => {
     const customServer = createServer(
       makeStubDeps({ getRecentClips: () => [sampleClip] }),
     );
-    await new Promise<void>((r) => customServer.listen(0, '127.0.0.1', r));
+    await new Promise<void>((r) => customServer.listen(0, () => r()));
     const { port } = customServer.address() as { port: number };
     const res = await fetch(`http://127.0.0.1:${port}/clips`, {
       headers: { Authorization: authHeader() },
@@ -145,6 +145,47 @@ describe('GET /clips', () => {
     const body = await res.json();
     expect(body.clips).toHaveLength(1);
     expect(body.clips[0].id).toBe('clip-001');
+    await new Promise<void>((r) => customServer.close(() => r()));
+  });
+
+  it('integration: populates log with 12 entries -> returns exactly 10 most recent', async () => {
+    // Import here to avoid top-level import conflicts if not needed elsewhere
+    const { ClipLog } = await import('../clip-log');
+    const clipLog = new ClipLog();
+    
+    // Add 12 entries
+    for (let i = 0; i < 12; i++) {
+      clipLog.append({
+        id: `clip-${i}`,
+        sourceUrl: 'https://example.com',
+        pageTitle: `Title ${i}`,
+        selectedText: `Text ${i}`,
+        timestamp: new Date().toISOString(),
+        matchedPath: `Notes/Note${i}.md`,
+        justification: null,
+        tags: [],
+        comment: '',
+        status: 'inserted',
+      });
+    }
+
+    const customServer = createServer(
+      makeStubDeps({ getRecentClips: () => clipLog.getRecent() }),
+    );
+    await new Promise<void>((r) => customServer.listen(0, () => r()));
+    const { port } = customServer.address() as { port: number };
+    const res = await fetch(`http://127.0.0.1:${port}/clips`, {
+      headers: { Authorization: authHeader() },
+    });
+    const body = await res.json();
+    
+    expect(res.status).toBe(200);
+    expect(body.clips).toHaveLength(10);
+    
+    // Check most-recent-first ordering (id 11 should be first, id 2 should be last)
+    expect(body.clips[0].id).toBe('clip-11');
+    expect(body.clips[9].id).toBe('clip-2');
+    
     await new Promise<void>((r) => customServer.close(() => r()));
   });
 });

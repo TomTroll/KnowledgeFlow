@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "KnowledgeFlow Chrome Extension — Manifest V3 web clipper",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "node esbuild.config.mjs",
     "dev": "node esbuild.config.mjs --watch",
@@ -16,6 +17,7 @@
   "devDependencies": {
     "@playwright/test": "^1.44.0",
     "@types/chrome": "^0.0.268",
+    "@types/node": "^20.19.43",
     "esbuild": "^0.21.4",
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"

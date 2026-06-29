@@ -12,7 +12,7 @@
 import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
 import type KnowledgeFlowPlugin from './main';
 import { hashToken } from './auth';
-import { EMBEDDING_MODEL } from './gemini-models';
+import { EMBEDDING_MODEL, EMBEDDING_DIMENSIONS, EMBEDDING_TASK_TYPE } from './gemini-models';
 
 export class KnowledgeFlowSettingTab extends PluginSettingTab {
   plugin: KnowledgeFlowPlugin;
@@ -61,6 +61,8 @@ export class KnowledgeFlowSettingTab extends PluginSettingTab {
                 body: JSON.stringify({
                   model: `models/${EMBEDDING_MODEL}`,
                   content: { parts: [{ text: 'KnowledgeFlow key check' }] },
+                  outputDimensionality: EMBEDDING_DIMENSIONS,
+                  taskType: EMBEDDING_TASK_TYPE,
                 }),
               },
             );

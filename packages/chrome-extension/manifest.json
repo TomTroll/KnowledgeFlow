@@ -5,10 +5,13 @@
   "description": "Local-first web clipper that routes semantic text snippets into your Obsidian vault.",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "scripting",
+    "tabs"
   ],
   "host_permissions": [
-    "http://127.0.0.1:*/*"
+    "http://127.0.0.1:*/*",
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "dist/background.js"

@@ -17,7 +17,7 @@ export interface VectorCacheEntry {
   vaultPath: string;
   /** Note title (basename without extension) */
   title: string;
-  /** 768-dimensional embedding from text-embedding-004 */
+  /** 768-dimensional embedding from gemini-embedding-2 (outputDimensionality: 768, MRL) */
   embedding: number[];
   /** mtime Unix ms — used for differential sync */
   updatedAt: number;

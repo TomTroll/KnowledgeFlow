@@ -3,11 +3,12 @@
   "compilerOptions": {
     "rootDir": "..",
     "outDir": "./dist",
-    "types": ["chrome"],
+    "types": ["chrome", "node"],
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "paths": {
       "@knowledgeflow/shared": ["../shared/src/index.ts"],
       "@knowledgeflow/shared/*": ["../shared/src/*"]
     }
   },
-  "include": ["src/**/*", "../shared/src/**/*"]
+  "include": ["src/**/*", "tests/**/*", "../shared/src/**/*"]
 }

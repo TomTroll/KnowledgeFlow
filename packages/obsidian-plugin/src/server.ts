@@ -57,6 +57,9 @@ function sendJson(
   res.writeHead(status, {
     'Content-Type': 'application/json',
     'Content-Length': Buffer.byteLength(payload),
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   });
   res.end(payload);
 }
@@ -80,6 +83,17 @@ function readBody(req: http.IncomingMessage): Promise<string> {
  */
 export function createServer(deps: ServerDeps): http.Server {
   return http.createServer(async (req, res) => {
+    // Handle CORS preflight
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      });
+      res.end();
+      return;
+    }
+
     const authHeader = req.headers['authorization'] as string | undefined;
 
     // All routes require a valid Bearer token
@@ -144,6 +158,7 @@ export function createServer(deps: ServerDeps): http.Server {
       // ------------------------------------------------------------------
       sendJson(res, 404, { error: 'Not Found' });
     } catch (err) {
+      console.error('[KnowledgeFlow] Internal Server Error:', err);
       sendJson(res, 500, { error: 'Internal Server Error' });
     }
   });

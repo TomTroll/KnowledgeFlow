@@ -46,6 +46,7 @@ export class ClipQueue {
       return response;
     } catch (e) {
       if (e instanceof GeminiRateLimitError) {
+        console.error('[KnowledgeFlow] Gemini API Rate Limit Hit:', e.message);
         return this.enqueue(req, clipId, e.retryAfterMs, isInitial);
       }
       // If it's a retry and it threw a non-rate-limit error, we should probably remove it from the queue

@@ -25,4 +25,4 @@ export const EMBEDDING_TASK_TYPE = 'RETRIEVAL_DOCUMENT';
  */
 export const QUERY_TASK_TYPE = 'RETRIEVAL_QUERY';
 
-export const FLASH_MODEL = 'gemini-2.0-flash';
+export const FLASH_MODEL = 'gemini-2.5-flash';

@@ -243,3 +243,66 @@
 .kf-save:active {
   transform: scale(0.97);
 }
+
+.kf-spinner {
+  flex: 1;
+  display: none;
+  height: 29px; /* Matches Save button height */
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.kf-spinner::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: kf-shimmer 1.5s infinite;
+}
+
+@keyframes kf-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* -----------------------------------------------------------------------
+ * Toasts (Success / Error / Info)
+ * ----------------------------------------------------------------------- */
+.kf-toast {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  animation: kf-slide-in 0.2s ease-out;
+}
+
+.kf-toast-success {
+  background: rgba(166, 227, 161, 0.1);
+  border: 1px solid rgba(166, 227, 161, 0.3);
+  color: #a6e3a1;
+}
+
+.kf-toast-error {
+  background: rgba(243, 139, 168, 0.1);
+  border: 1px solid rgba(243, 139, 168, 0.3);
+  color: #f38ba8;
+}
+
+.kf-toast-info {
+  background: rgba(137, 180, 250, 0.1);
+  border: 1px solid rgba(137, 180, 250, 0.3);
+  color: #89b4fa;
+}
+
+.kf-toast-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.kf-toast-desc {
+  color: #cdd6f4;
+  line-height: 1.4;
+}
+

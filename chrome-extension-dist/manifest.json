@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "KnowledgeFlow",
+  "version": "0.1.0",
+  "description": "Local-first web clipper that routes semantic text snippets into your Obsidian vault.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:*/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "dist/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["dist/content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "KnowledgeFlow"
+  },
+  "options_page": "options.html",
+  "commands": {
+    "trigger-clip": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Clip selected text to Obsidian"
+    }
+  }
+}

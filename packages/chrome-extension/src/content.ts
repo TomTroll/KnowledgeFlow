@@ -8,7 +8,7 @@
 // In both cases the selection's bounding rect is forwarded to showClipPopup()
 // so the popup appears near the selected text instead of a fixed corner.
 
-import { showClipPopup } from './ui/preview.js';
+import { showClipPopup, ClipPayload } from './ui/preview.js';
 
 /** Read the current selection and show the popup near it, if there is text. */
 function triggerFromSelection(rect?: DOMRect): void {
@@ -48,6 +48,57 @@ document.addEventListener('mouseup', () => {
 
     triggerFromSelection(getSelectionRect());
   }, 50);
+});
+
+// ── 3. Clip Submission Handler ──────────────────────────────────────────────
+document.addEventListener('kf:clip-save', async (e: Event) => {
+  const payload = (e as CustomEvent<ClipPayload>).detail;
+
+  chrome.storage.sync.get({ port: 37321, token: '' }, async (settings) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:${settings.port}/clip`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${settings.token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.status === 202) {
+        document.dispatchEvent(new CustomEvent('kf:clip-queued'));
+        
+        const poll = setInterval(async () => {
+          try {
+            const statusRes = await fetch(`http://127.0.0.1:${settings.port}/status`, {
+              headers: { Authorization: `Bearer ${settings.token}` }
+            });
+            const statusData = await statusRes.json();
+            if (statusData.queuedClips === 0) {
+              clearInterval(poll);
+              const clipsRes = await fetch(`http://127.0.0.1:${settings.port}/clips`, {
+                headers: { Authorization: `Bearer ${settings.token}` }
+              });
+              const clipsData = await clipsRes.json();
+              document.dispatchEvent(new CustomEvent('kf:clip-success', { detail: clipsData.clips[0] || { matchedPath: 'Saved', justification: '' } }));
+            }
+          } catch (e) {}
+        }, 1000);
+        return;
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        document.dispatchEvent(new CustomEvent('kf:clip-success', { detail: data }));
+      } else {
+        const errData = await response.json().catch(() => null);
+        const errMsg = errData?.error || `Server returned ${response.status}`;
+        document.dispatchEvent(new CustomEvent('kf:clip-error', { detail: { message: errMsg } }));
+      }
+    } catch (err: any) {
+      document.dispatchEvent(new CustomEvent('kf:clip-error', { detail: { message: err.message || 'Network error' } }));
+    }
+  });
 });
 
 // ── Test hook ───────────────────────────────────────────────────────────────

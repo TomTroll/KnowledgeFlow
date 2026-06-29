@@ -136,11 +136,11 @@ export function showClipPopup(
   }
 
   // ── 6. Wire up dismiss logic ───────────────────────────────────────────
-  function dismiss(): void {
+  let dismiss = function(): void {
     host.remove();
     document.removeEventListener('keydown', onKeyDown);
     document.removeEventListener('mousedown', onMouseDown);
-  }
+  };
 
   function onKeyDown(e: KeyboardEvent): void {
     if (e.key === 'Escape') dismiss();
@@ -244,13 +244,112 @@ export function showClipPopup(
       comment,
     };
 
+    // Show loading spinner
+    const saveBtn = shadow.getElementById('kf-save-btn') as HTMLButtonElement;
+    saveBtn.style.display = 'none';
+
+    let spinner = shadow.getElementById('kf-spinner');
+    if (!spinner) {
+      spinner = document.createElement('div');
+      spinner.id = 'kf-spinner';
+      spinner.className = 'kf-spinner';
+      spinner.dataset.testid = 'loading-spinner';
+      saveBtn.parentElement!.appendChild(spinner);
+    }
+    spinner.style.display = 'block';
+
     // Emit for Playwright tests and for the submission handler (#9)
     document.dispatchEvent(new CustomEvent('kf:clip-save', { detail: payload }));
-
-    dismiss();
   });
 
-  // ── 9. Focus tag input for quick entry ────────────────────────────────
+  // ── 9. Submission Feedback (Issue #9) ──────────────────────────────────
+  function onSuccess(e: Event) {
+    const data = (e as CustomEvent).detail;
+    
+    // Hide spinner
+    const spinner = shadow.getElementById('kf-spinner');
+    if (spinner) spinner.style.display = 'none';
+
+    // Show success toast
+    const toast = document.createElement('div');
+    toast.className = 'kf-toast kf-toast-success';
+    toast.dataset.testid = 'toast-success';
+    toast.innerHTML = `
+      <div class="kf-toast-title">✅ Saved to ${escapeHtml(data.matchedPath)}</div>
+      ${data.justification ? `<div class="kf-toast-desc">${escapeHtml(data.justification)}</div>` : ''}
+    `;
+    
+    // Insert toast before actions
+    const actions = shadow.querySelector('.kf-actions');
+    actions?.parentElement?.insertBefore(toast, actions);
+
+    // Dismiss after 2 seconds
+    setTimeout(dismiss, 2000);
+  }
+
+  function onError(e: Event) {
+    const data = (e as CustomEvent).detail;
+    
+    // Hide spinner and show save button
+    const spinner = shadow.getElementById('kf-spinner');
+    if (spinner) spinner.style.display = 'none';
+    const saveBtn = shadow.getElementById('kf-save-btn') as HTMLButtonElement;
+    if (saveBtn) saveBtn.style.display = 'block';
+
+    // Remove existing error toast if any
+    const existing = shadow.querySelector('[data-testid="toast-error"]');
+    if (existing) existing.remove();
+
+    // Show error toast
+    const toast = document.createElement('div');
+    toast.className = 'kf-toast kf-toast-error';
+    toast.dataset.testid = 'toast-error';
+    toast.innerHTML = `
+      <div class="kf-toast-title">❌ Failed to Save</div>
+      <div class="kf-toast-desc">${escapeHtml(data.message)}</div>
+      <div class="kf-toast-desc" style="opacity: 0.8; margin-top: 4px; font-size: 11px;">Please try again.</div>
+    `;
+    
+    // Insert toast before actions
+    const actions = shadow.querySelector('.kf-actions');
+    actions?.parentElement?.insertBefore(toast, actions);
+  }
+
+  function onQueued() {
+    // Remove existing error/success toast if any
+    shadow.querySelector('[data-testid="toast-error"]')?.remove();
+    shadow.querySelector('[data-testid="toast-success"]')?.remove();
+    const existing = shadow.querySelector('[data-testid="toast-queued"]');
+    if (existing) return; // already showing
+
+    // Show queued toast banner
+    const toast = document.createElement('div');
+    toast.className = 'kf-toast kf-toast-info';
+    toast.dataset.testid = 'toast-queued';
+    toast.innerHTML = `
+      <div class="kf-toast-title">⏳ Rate limit reached</div>
+      <div class="kf-toast-desc">Waiting in queue...</div>
+    `;
+    
+    // Insert toast before actions
+    const actions = shadow.querySelector('.kf-actions');
+    actions?.parentElement?.insertBefore(toast, actions);
+  }
+
+  document.addEventListener('kf:clip-success', onSuccess, { once: true });
+  document.addEventListener('kf:clip-error', onError);
+  document.addEventListener('kf:clip-queued', onQueued);
+
+  // Make sure to remove listener if dismissed early
+  const originalDismiss = dismiss;
+  dismiss = function() {
+    document.removeEventListener('kf:clip-success', onSuccess);
+    document.removeEventListener('kf:clip-error', onError);
+    document.removeEventListener('kf:clip-queued', onQueued);
+    originalDismiss();
+  };
+
+  // ── 10. Focus tag input for quick entry ────────────────────────────────
   // Slight delay to let the popup animation settle
   setTimeout(() => {
     (shadow.getElementById('kf-tag-input') as HTMLInputElement | null)?.focus();

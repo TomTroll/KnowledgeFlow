@@ -91,6 +91,7 @@ export class KnowledgeFlowSettingTab extends PluginSettingTab {
           const rawToken = crypto.randomUUID();
           const hash = await hashToken(rawToken);
           this.plugin.settings.authTokenHash = hash;
+          this.plugin.settings.rawAuthToken = rawToken;
           await this.plugin.saveSettings();
 
           // Show the token as a selectable read-only input directly in the tab
@@ -132,6 +133,12 @@ export class KnowledgeFlowSettingTab extends PluginSettingTab {
     });
     tokenRow.appendChild(tokenDisplay);
     tokenRow.appendChild(copyBtn);
+
+    // If a token was previously generated, display it immediately
+    if (this.plugin.settings.rawAuthToken) {
+      tokenDisplay.value = this.plugin.settings.rawAuthToken;
+      tokenRow.style.display = 'flex';
+    }
 
     // ------------------------------------------------------------------
     // Port

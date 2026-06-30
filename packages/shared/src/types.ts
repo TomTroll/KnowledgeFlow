@@ -61,6 +61,8 @@ export interface PluginSettings {
   geminiKey: string;
   /** SHA-256 hash of the raw Bearer token; raw token shown once in UI */
   authTokenHash: string;
+  /** The raw Bearer token, stored to make it permanently visible in the UI */
+  rawAuthToken: string;
   /** HTTP server port, default 37321 */
   port: number;
   /** Cosine similarity threshold below which a new note is created, default 0.70 */
@@ -72,6 +74,7 @@ export interface PluginSettings {
 export const DEFAULT_PLUGIN_SETTINGS: PluginSettings = {
   geminiKey: '',
   authTokenHash: '',
+  rawAuthToken: '',
   port: 37321,
   threshold: 0.70,
   llmValidationEnabled: true,

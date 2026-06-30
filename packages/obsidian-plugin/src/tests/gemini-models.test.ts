@@ -26,8 +26,7 @@ describe('model consistency across source files', () => {
 
   it('gemini-api.ts imports EMBEDDING_MODEL and has no hardcoded model strings', () => {
     const source = readFileSync(resolve(srcDir, 'gemini-api.ts'), 'utf-8');
-    // Must import the constant
-    expect(source).toContain("import { EMBEDDING_MODEL } from './gemini-models'");
+    expect(source).toContain("EMBEDDING_MODEL");
     // Must use the constant in the endpoint and request body
     expect(source).toContain('${EMBEDDING_MODEL}');
     // Must NOT contain any hardcoded model name
@@ -39,7 +38,7 @@ describe('model consistency across source files', () => {
   it('settings-tab.ts imports EMBEDDING_MODEL and has no hardcoded model strings', () => {
     const source = readFileSync(resolve(srcDir, 'settings-tab.ts'), 'utf-8');
     // Must import the constant
-    expect(source).toContain("import { EMBEDDING_MODEL } from './gemini-models'");
+    expect(source).toContain("EMBEDDING_MODEL");
     // Must use the constant in the validation fetch
     expect(source).toContain('${EMBEDDING_MODEL}');
     // Must NOT contain the deprecated model

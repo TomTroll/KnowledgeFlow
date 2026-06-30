@@ -21,6 +21,10 @@ export interface VectorCacheEntry {
   embedding: number[];
   /** mtime Unix ms — used for differential sync */
   updatedAt: number;
+  /** Cached section embeddings (in-memory or persisted) */
+  sectionEmbeddings?: number[][];
+  /** Cached paragraph embeddings per section index */
+  paragraphEmbeddings?: Record<number, number[][]>;
 }
 
 // ---------------------------------------------------------------------------

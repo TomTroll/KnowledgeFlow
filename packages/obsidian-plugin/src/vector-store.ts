@@ -72,4 +72,41 @@ export class VectorStore {
 
     return scored.slice(0, k);
   }
+
+  // ---------------------------------------------------------------------------
+  // Chunk Caching for routing
+  // ---------------------------------------------------------------------------
+
+  getSectionEmbeddings(vaultPath: string, mtime: number): number[][] | undefined {
+    const entry = this.get(vaultPath);
+    if (entry && entry.updatedAt === mtime) {
+      return entry.sectionEmbeddings;
+    }
+    return undefined;
+  }
+
+  saveSectionEmbeddings(vaultPath: string, mtime: number, embeddings: number[][]): void {
+    const entry = this.get(vaultPath);
+    if (entry && entry.updatedAt === mtime) {
+      entry.sectionEmbeddings = embeddings;
+    }
+  }
+
+  getParagraphEmbeddings(vaultPath: string, mtime: number, sectionIdx: number): number[][] | undefined {
+    const entry = this.get(vaultPath);
+    if (entry && entry.updatedAt === mtime) {
+      return entry.paragraphEmbeddings?.[sectionIdx];
+    }
+    return undefined;
+  }
+
+  saveParagraphEmbeddings(vaultPath: string, mtime: number, sectionIdx: number, embeddings: number[][]): void {
+    const entry = this.get(vaultPath);
+    if (entry && entry.updatedAt === mtime) {
+      if (!entry.paragraphEmbeddings) {
+        entry.paragraphEmbeddings = {};
+      }
+      entry.paragraphEmbeddings[sectionIdx] = embeddings;
+    }
+  }
 }

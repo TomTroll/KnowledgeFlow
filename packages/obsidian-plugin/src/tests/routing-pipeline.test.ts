@@ -65,8 +65,8 @@ function makeDeps(overrides: Partial<RoutingDeps> = {}): RoutingDeps {
     process: vi.fn().mockImplementation(async (_file: any, fn: (content: string) => string) => {
       return fn(makeNote(5));
     }),
-    getAbstractFileByPath: vi.fn().mockReturnValue({ path: 'Notes/Note0.md' }),
-    create: vi.fn().mockResolvedValue({ path: 'New Note.md' }),
+    getAbstractFileByPath: vi.fn().mockReturnValue({ path: 'Notes/Note0.md', stat: { mtime: Date.now() } }),
+    create: vi.fn().mockResolvedValue({ path: 'New Note.md', stat: { mtime: Date.now() } }),
   } as any;
 
   return {
@@ -136,7 +136,7 @@ describe('RoutingPipeline', () => {
         process: vi.fn().mockImplementation(async (_file: any, fn: (c: string) => string) => {
           return fn(noteWith30Paragraphs);
         }),
-        getAbstractFileByPath: vi.fn().mockReturnValue({ path: 'Notes/Note0.md' }),
+        getAbstractFileByPath: vi.fn().mockReturnValue({ path: 'Notes/Note0.md', stat: { mtime: Date.now() } }),
         create: vi.fn(),
       } as any,
     });
@@ -169,8 +169,8 @@ describe('RoutingPipeline', () => {
     const vault = {
       read: vi.fn().mockResolvedValue('Dummy content'),
       process: vi.fn(),
-      getAbstractFileByPath: vi.fn().mockReturnValue({ path: 'Notes/Note0.md' }),
-      create: vi.fn().mockResolvedValue({ path: 'Deep Learning Basics — 2026-06-28.md' }),
+      getAbstractFileByPath: vi.fn().mockReturnValue({ path: 'Notes/Note0.md', stat: { mtime: Date.now() } }),
+      create: vi.fn().mockResolvedValue({ path: 'Deep Learning Basics — 2026-06-28.md', stat: { mtime: Date.now() } }),
     } as any;
 
     // Vector with 1 at index 1, 0 elsewhere (orthogonal -> dot product 0)
@@ -238,7 +238,7 @@ describe('RoutingPipeline', () => {
           processedContent = fn(originalNote);
           return processedContent;
         }),
-        getAbstractFileByPath: vi.fn().mockReturnValue({ path: 'Notes/Note0.md' }),
+        getAbstractFileByPath: vi.fn().mockReturnValue({ path: 'Notes/Note0.md', stat: { mtime: Date.now() } }),
         create: vi.fn(),
       } as any,
     });

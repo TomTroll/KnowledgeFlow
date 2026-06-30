@@ -65,10 +65,19 @@ function renderOptions(port: number, token: string): void {
     <div id="status-message" class="status-message" role="status" aria-live="polite"></div>
   `;
 
-  document.getElementById('save-btn')!.addEventListener('click', async () => {
+  const saveSettingsHandler = async () => {
     const newPort = parseInt((document.getElementById('port') as HTMLInputElement).value, 10);
     const newToken = (document.getElementById('token') as HTMLInputElement).value.trim();
-    await saveSettings(newPort, newToken);
+    if (!isNaN(newPort)) {
+      await saveSettings(newPort, newToken);
+    }
+  };
+
+  document.getElementById('port')!.addEventListener('input', saveSettingsHandler);
+  document.getElementById('token')!.addEventListener('input', saveSettingsHandler);
+
+  document.getElementById('save-btn')!.addEventListener('click', async () => {
+    await saveSettingsHandler();
     showStatus('✅ Settings saved.', 'success');
   });
 
@@ -79,11 +88,18 @@ function renderOptions(port: number, token: string): void {
     try {
       const status = await testConnection(currentPort, currentToken);
       showStatus(
-        `✅ Connected — Plugin v${status.pluginVersion}, ${status.cachedNoteCount} notes indexed.`,
+        `✅ Connected — Plugin v${status.pluginVersion}`,
         'success',
       );
     } catch (err) {
-      showStatus(`⛔ Connection failed: ${(err as Error).message}`, 'error');
+      const errMsg = (err as Error).message;
+      if (errMsg.includes('HTTP 401') || errMsg.includes('HTTP 403')) {
+        showStatus('⛔ Connection failed: Invalid authorization token.', 'error');
+      } else if (errMsg.includes('Failed to fetch') || errMsg.includes('NetworkError') || errMsg.includes('Load failed')) {
+        showStatus('⛔ Connection failed: The Obsidian server is unreachable. Check that Obsidian is open and the port is correct.', 'error');
+      } else {
+        showStatus(`⛔ Connection failed: ${errMsg}`, 'error');
+      }
     }
   });
 }

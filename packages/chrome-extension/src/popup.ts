@@ -42,26 +42,32 @@ function renderClips(clips: ClipLogEntry[]): void {
   }
   app.innerHTML = clips
     .map(
-      (clip) => `
+      (clip) => {
+        const previewText = clip.selectedText.length > 80 ? clip.selectedText.substring(0, 80) + '...' : clip.selectedText;
+        return `
       <div class="clip-row">
-        <span class="clip-title">${clip.pageTitle}</span>
+        <span class="clip-preview">${previewText}</span>
         <span class="clip-path">${clip.matchedPath}</span>
         <span class="clip-time">${new Date(clip.timestamp).toLocaleString()}</span>
-      </div>`,
+      </div>`;
+      }
     )
     .join('');
 }
 
 /** Render an offline / error state into #app. */
-function renderOffline(message: string): void {
+function renderOffline(message: string, onRetry: () => void): void {
   const app = document.getElementById('app')!;
   app.innerHTML = `
-    <div class="offline-state">
-      <span class="offline-icon">⛔</span>
-      <p class="offline-title">Obsidian Offline</p>
-      <p class="offline-message">${message}</p>
-      <p class="offline-hint">Ensure Obsidian is open and the KnowledgeFlow plugin is enabled.</p>
+    <div class="offline-state" style="text-align: center; padding: 20px;">
+      <span class="offline-icon" style="font-size: 24px;">⛔</span>
+      <p class="offline-title" style="font-weight: bold; margin-top: 10px;">Obsidian Offline</p>
+      <p class="offline-message" style="margin-top: 5px; color: #f38ba8;">${message}</p>
+      <p class="offline-hint" style="margin-top: 10px; font-size: 11px;">Ensure Obsidian is open and the KnowledgeFlow plugin is enabled.</p>
+      <button id="retry-btn" style="margin-top: 15px; padding: 6px 12px; cursor: pointer; border-radius: 4px; border: none; background: #89b4fa; color: #11111b; font-weight: bold;">Retry</button>
     </div>`;
+    
+  document.getElementById('retry-btn')?.addEventListener('click', onRetry);
 }
 
 async function fetchStatus(port: number, token: string): Promise<StatusResponse> {
@@ -114,20 +120,6 @@ function removeBanner() {
 async function init(): Promise<void> {
   const [port, token] = await Promise.all([getPort(), getToken()]);
   
-  const loadClips = async () => {
-    try {
-      const clips = await fetchClips(port, token);
-      renderClips(clips);
-      return true; // Success
-    } catch {
-      renderOffline(`Cannot reach localhost:${port}`);
-      return false; // Offline
-    }
-  };
-
-  const isOnline = await loadClips();
-  if (!isOnline) return; // Don't poll status if offline initially
-
   const pollStatusRoutine = async () => {
     try {
       const status = await fetchStatus(port, token);
@@ -152,12 +144,35 @@ async function init(): Promise<void> {
         clearInterval(statusPollTimer);
         statusPollTimer = null;
       }
-      renderOffline(`Cannot reach localhost:${port}`);
+      renderOffline(`Cannot reach localhost:${port}`, handleRetry);
     }
   };
 
-  await pollStatusRoutine();
-  statusPollTimer = setInterval(pollStatusRoutine, 2000);
+  const loadClips = async () => {
+    try {
+      const clips = await fetchClips(port, token);
+      renderClips(clips);
+      return true; // Success
+    } catch {
+      removeBanner(); // Ensure banner is hidden when offline
+      renderOffline(`Cannot reach localhost:${port}`, handleRetry);
+      return false; // Offline
+    }
+  };
+
+  const handleRetry = async () => {
+    const isOnline = await loadClips();
+    if (isOnline && !statusPollTimer) {
+      pollStatusRoutine();
+      statusPollTimer = setInterval(pollStatusRoutine, 2000);
+    }
+  };
+
+  const isOnline = await loadClips();
+  if (isOnline) {
+    pollStatusRoutine();
+    statusPollTimer = setInterval(pollStatusRoutine, 2000);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);

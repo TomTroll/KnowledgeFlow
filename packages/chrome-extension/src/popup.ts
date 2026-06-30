@@ -64,14 +64,100 @@ function renderOffline(message: string): void {
     </div>`;
 }
 
+async function fetchStatus(port: number, token: string): Promise<StatusResponse> {
+  const response = await fetch(`http://127.0.0.1:${port}/status`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.json();
+}
+
+let statusPollTimer: ReturnType<typeof setInterval> | null = null;
+let countdownTimer: ReturnType<typeof setInterval> | null = null;
+
+function renderBanner(retryAfter: number) {
+  let banner = document.getElementById('queue-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'queue-banner';
+    banner.style.padding = '8px 12px';
+    banner.style.background = '#f38ba8'; // match error/alert color
+    banner.style.color = '#11111b';
+    banner.style.fontWeight = 'bold';
+    banner.style.marginBottom = '10px';
+    banner.style.borderRadius = '4px';
+    document.body.insertBefore(banner, document.getElementById('app'));
+  }
+
+  const update = () => {
+    const remaining = Math.max(0, Math.ceil((retryAfter - Date.now()) / 1000));
+    if (banner) {
+      banner.textContent = `⏳ Clip queued — retrying in ${remaining}s...`;
+    }
+  };
+  update();
+
+  if (!countdownTimer) {
+    countdownTimer = setInterval(update, 1000);
+  }
+}
+
+function removeBanner() {
+  const banner = document.getElementById('queue-banner');
+  if (banner) banner.remove();
+  if (countdownTimer) {
+    clearInterval(countdownTimer);
+    countdownTimer = null;
+  }
+}
+
 async function init(): Promise<void> {
   const [port, token] = await Promise.all([getPort(), getToken()]);
-  try {
-    const clips = await fetchClips(port, token);
-    renderClips(clips);
-  } catch {
-    renderOffline(`Cannot reach localhost:${port}`);
-  }
+  
+  const loadClips = async () => {
+    try {
+      const clips = await fetchClips(port, token);
+      renderClips(clips);
+      return true; // Success
+    } catch {
+      renderOffline(`Cannot reach localhost:${port}`);
+      return false; // Offline
+    }
+  };
+
+  const isOnline = await loadClips();
+  if (!isOnline) return; // Don't poll status if offline initially
+
+  const pollStatusRoutine = async () => {
+    try {
+      const status = await fetchStatus(port, token);
+      if (status.queuedClips > 0) {
+        chrome.storage.local.get('retryAfter', (items) => {
+          if (items.retryAfter) {
+            renderBanner(items.retryAfter);
+          }
+        });
+      } else {
+        const wasShowingBanner = !!document.getElementById('queue-banner');
+        removeBanner();
+        
+        // If queue just resolved, fetch latest clips to show the newly inserted one
+        if (wasShowingBanner) {
+          loadClips();
+        }
+      }
+    } catch (e) {
+      removeBanner();
+      if (statusPollTimer) {
+        clearInterval(statusPollTimer);
+        statusPollTimer = null;
+      }
+      renderOffline(`Cannot reach localhost:${port}`);
+    }
+  };
+
+  await pollStatusRoutine();
+  statusPollTimer = setInterval(pollStatusRoutine, 2000);
 }
 
 document.addEventListener('DOMContentLoaded', init);

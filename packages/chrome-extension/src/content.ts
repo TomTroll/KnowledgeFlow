@@ -66,6 +66,11 @@ document.addEventListener('kf:clip-save', async (e: Event) => {
       });
 
       if (response.status === 202) {
+        const queuedData = await response.json().catch(() => null);
+        if (queuedData?.retryAfter) {
+          chrome.storage.local.set({ retryAfter: queuedData.retryAfter });
+        }
+        
         document.dispatchEvent(new CustomEvent('kf:clip-queued'));
         
         const poll = setInterval(async () => {
@@ -76,6 +81,7 @@ document.addEventListener('kf:clip-save', async (e: Event) => {
             const statusData = await statusRes.json();
             if (statusData.queuedClips === 0) {
               clearInterval(poll);
+              chrome.storage.local.remove('retryAfter');
               const clipsRes = await fetch(`http://127.0.0.1:${settings.port}/clips`, {
                 headers: { Authorization: `Bearer ${settings.token}` }
               });

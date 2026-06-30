@@ -67,7 +67,6 @@ export function showClipPopup(
 
   popup.innerHTML = /* html */ `
     <div class="kf-header">
-      <span class="kf-logo">✂️</span>
       <span class="kf-title">KnowledgeFlow</span>
       <button class="kf-close" id="kf-close-btn" aria-label="Dismiss">✕</button>
     </div>
@@ -88,11 +87,8 @@ export function showClipPopup(
       />
     </div>
 
-    <button class="kf-comment-toggle" id="kf-comment-toggle">
-      <i class="kf-comment-arrow" id="kf-comment-arrow">▶</i>
-      Add a comment
-    </button>
-    <div id="kf-comment-wrap">
+    <div class="kf-field">
+      <label class="kf-label" for="kf-comment">Comment</label>
       <textarea
         id="kf-comment"
         class="kf-textarea"
@@ -102,7 +98,9 @@ export function showClipPopup(
     </div>
 
     <div class="kf-actions">
-      <button class="kf-mic" id="kf-mic-btn" aria-label="Voice comment" title="Transcribe voice to comment">🎙️</button>
+      <button class="kf-mic" id="kf-mic-btn" aria-label="Voice comment" title="Transcribe voice to comment">
+        <img src="${chrome.runtime.getURL('assets/mic-16.png')}" alt="Mic" style="width: 16px; height: 16px; pointer-events: none; display: block;" />
+      </button>
       <button class="kf-save" id="kf-save-btn" data-testid="save-button">Save clip</button>
     </div>
   `;
@@ -157,13 +155,7 @@ export function showClipPopup(
 
   shadow.getElementById('kf-close-btn')!.addEventListener('click', dismiss);
 
-  // ── 6. Comment toggle ──────────────────────────────────────────────────
-  shadow.getElementById('kf-comment-toggle')!.addEventListener('click', () => {
-    const wrap = shadow.getElementById('kf-comment-wrap')!;
-    const arrow = shadow.getElementById('kf-comment-arrow')!;
-    const isOpen = wrap.classList.toggle('open');
-    arrow.classList.toggle('open', isOpen);
-  });
+
 
   // ── 7. Microphone toggle (Web Speech API) ─────────────────────────────
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -191,13 +183,7 @@ export function showClipPopup(
       return;
     }
 
-    // Open the comment section so the user can see transcription
-    const wrap = shadow.getElementById('kf-comment-wrap')!;
-    const arrow = shadow.getElementById('kf-comment-arrow')!;
-    if (!wrap.classList.contains('open')) {
-      wrap.classList.add('open');
-      arrow.classList.add('open');
-    }
+
 
     recognition = new SpeechRecognitionCtor();
     recognition.continuous = true;

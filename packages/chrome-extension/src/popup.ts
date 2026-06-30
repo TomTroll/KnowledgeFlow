@@ -59,12 +59,12 @@ function renderClips(clips: ClipLogEntry[]): void {
 function renderOffline(message: string, onRetry: () => void): void {
   const app = document.getElementById('app')!;
   app.innerHTML = `
-    <div class="offline-state" style="text-align: center; padding: 20px;">
+    <div class="offline-state" style="text-align: center; padding: 24px 12px;">
       <span class="offline-icon" style="font-size: 24px;">⛔</span>
-      <p class="offline-title" style="font-weight: bold; margin-top: 10px;">Obsidian Offline</p>
-      <p class="offline-message" style="margin-top: 5px; color: #f38ba8;">${message}</p>
-      <p class="offline-hint" style="margin-top: 10px; font-size: 11px;">Ensure Obsidian is open and the KnowledgeFlow plugin is enabled.</p>
-      <button id="retry-btn" style="margin-top: 15px; padding: 6px 12px; cursor: pointer; border-radius: 4px; border: none; background: #89b4fa; color: #11111b; font-weight: bold;">Retry</button>
+      <p class="offline-title" style="font: var(--md-sys-typescale-title-small); margin-top: 12px; color: var(--md-sys-color-on-background);">Obsidian Offline</p>
+      <p class="offline-message" style="margin-top: 4px; color: var(--md-sys-color-error); font: var(--md-sys-typescale-body-medium);">${message}</p>
+      <p class="offline-hint" style="margin-top: 12px; font: var(--md-sys-typescale-label-small); color: var(--md-sys-color-on-surface-variant);">Ensure Obsidian is open and the KnowledgeFlow plugin is enabled.</p>
+      <button id="retry-btn" style="margin-top: 20px; padding: 8px 16px; cursor: pointer; border-radius: var(--md-sys-shape-corner-full); border: none; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font: var(--md-sys-typescale-label-small); transition: opacity 0.2s;">Retry</button>
     </div>`;
     
   document.getElementById('retry-btn')?.addEventListener('click', onRetry);
@@ -86,12 +86,13 @@ function renderBanner(retryAfter: number) {
   if (!banner) {
     banner = document.createElement('div');
     banner.id = 'queue-banner';
-    banner.style.padding = '8px 12px';
-    banner.style.background = '#f38ba8'; // match error/alert color
-    banner.style.color = '#11111b';
-    banner.style.fontWeight = 'bold';
-    banner.style.marginBottom = '10px';
-    banner.style.borderRadius = '4px';
+    banner.style.padding = '12px 16px';
+    banner.style.background = 'var(--md-sys-color-error)';
+    banner.style.color = 'var(--md-sys-color-on-error)';
+    banner.style.font = 'var(--md-sys-typescale-title-small)';
+    banner.style.marginBottom = '12px';
+    banner.style.borderRadius = 'var(--md-sys-shape-corner-medium)';
+    banner.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
     document.body.insertBefore(banner, document.getElementById('app'));
   }
 

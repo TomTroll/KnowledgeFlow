@@ -5,14 +5,82 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KnowledgeFlow</title>
   <style>
+    :root {
+      /* Obsidian aesthetic & Material 3 variables */
+      --md-sys-color-background: #1e1e1e;
+      --md-sys-color-surface: #2b2b2b;
+      --md-sys-color-surface-variant: #363636;
+      --md-sys-color-primary: #a78bfa; /* Brighter purple for better dark-mode legibility */
+      --md-sys-color-on-primary: #11111b; /* Dark text on bright primary button */
+      --md-sys-color-on-background: #dcddde;
+      --md-sys-color-on-surface: #dcddde;
+      --md-sys-color-on-surface-variant: #999999;
+      --md-sys-color-error: #f38ba8;
+      --md-sys-color-on-error: #11111b;
+
+      --md-sys-shape-corner-small: 4px;
+      --md-sys-shape-corner-medium: 8px;
+      --md-sys-shape-corner-large: 12px;
+      --md-sys-shape-corner-full: 100px;
+      
+      --md-sys-typescale-body-medium: 400 13px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --md-sys-typescale-title-small: 600 14px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --md-sys-typescale-label-small: 500 11px/16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      width: 340px;
+      width: 360px;
       min-height: 200px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 13px;
-      background: #1e1e2e;
-      color: #cdd6f4;
+      font: var(--md-sys-typescale-body-medium);
+      background: var(--md-sys-color-background);
+      color: var(--md-sys-color-on-background);
+      padding: 12px;
+      border-radius: var(--md-sys-shape-corner-medium);
+      overflow: hidden;
+    }
+    
+    #app {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .clip-row {
+      background: var(--md-sys-color-surface);
+      border-radius: var(--md-sys-shape-corner-medium);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .clip-preview {
+      font: var(--md-sys-typescale-title-small);
+      color: var(--md-sys-color-on-surface);
+      display: block;
+    }
+
+    .clip-path {
+      font: var(--md-sys-typescale-label-small);
+      color: var(--md-sys-color-primary);
+      background: rgba(124, 58, 237, 0.15);
+      padding: 2px 6px;
+      border-radius: var(--md-sys-shape-corner-small);
+      width: fit-content;
+    }
+
+    .clip-time {
+      font: var(--md-sys-typescale-label-small);
+      color: var(--md-sys-color-on-surface-variant);
+      margin-top: 2px;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 24px 12px;
+      color: var(--md-sys-color-on-surface-variant);
     }
   </style>
 </head>

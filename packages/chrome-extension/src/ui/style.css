@@ -2,6 +2,29 @@
  * These styles are scoped inside the Shadow DOM and will
  * never bleed into or be affected by the host page CSS. */
 
+:host {
+  /* Obsidian aesthetic & Material 3 variables */
+  --md-sys-color-background: #1e1e1e;
+  --md-sys-color-surface: #2b2b2b;
+  --md-sys-color-surface-variant: #363636;
+  --md-sys-color-primary: #a78bfa; /* Brighter purple for better dark-mode legibility */
+  --md-sys-color-on-primary: #11111b; /* Dark text on bright primary button */
+  --md-sys-color-on-background: #dcddde;
+  --md-sys-color-on-surface: #dcddde;
+  --md-sys-color-on-surface-variant: #999999;
+  --md-sys-color-error: #f38ba8;
+  --md-sys-color-on-error: #11111b;
+
+  --md-sys-shape-corner-small: 4px;
+  --md-sys-shape-corner-medium: 8px;
+  --md-sys-shape-corner-large: 12px;
+  --md-sys-shape-corner-full: 100px;
+  
+  --md-sys-typescale-body-medium: 400 13px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --md-sys-typescale-title-small: 600 14px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --md-sys-typescale-label-small: 500 11px/16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
 /* -----------------------------------------------------------------------
  * Reset & base — everything inside the shadow root starts fresh
  * ----------------------------------------------------------------------- */
@@ -23,16 +46,15 @@
   z-index: 2147483647; /* max z-index */
 
   width: 360px;
-  background: #1e1e2e;
-  border: 1px solid rgba(139, 92, 246, 0.4);
-  border-radius: 12px;
+  background: var(--md-sys-color-background);
+  border: 1px solid rgba(167, 139, 250, 0.4);
+  border-radius: var(--md-sys-shape-corner-large);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(139, 92, 246, 0.15);
+    0 0 0 1px rgba(167, 139, 250, 0.15);
   padding: 16px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 13px;
-  color: #cdd6f4;
+  font: var(--md-sys-typescale-body-medium);
+  color: var(--md-sys-color-on-background);
   animation: kf-slide-in 0.18s ease-out;
 }
 
@@ -63,25 +85,24 @@
 
 .kf-title {
   flex: 1;
-  font-weight: 600;
-  font-size: 13px;
-  color: #a6adc8;
+  font: var(--md-sys-typescale-title-small);
+  color: var(--md-sys-color-on-background);
   letter-spacing: 0.02em;
 }
 
 .kf-close {
   background: none;
   border: none;
-  color: #6c7086;
+  color: var(--md-sys-color-on-surface-variant);
   font-size: 16px;
   cursor: pointer;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--md-sys-shape-corner-small);
   line-height: 1;
   transition: color 0.15s, background 0.15s;
 }
 .kf-close:hover {
-  color: #cdd6f4;
+  color: var(--md-sys-color-on-background);
   background: rgba(255, 255, 255, 0.06);
 }
 
@@ -89,14 +110,14 @@
  * Selection preview
  * ----------------------------------------------------------------------- */
 .kf-preview {
-  background: rgba(137, 180, 250, 0.06);
-  border-left: 3px solid #89b4fa;
-  border-radius: 0 6px 6px 0;
+  background: rgba(167, 139, 250, 0.06);
+  border-left: 3px solid var(--md-sys-color-primary);
+  border-radius: 0 var(--md-sys-shape-corner-medium) var(--md-sys-shape-corner-medium) 0;
   padding: 8px 10px;
   margin-bottom: 12px;
   font-size: 12px;
   line-height: 1.5;
-  color: #bac2de;
+  color: var(--md-sys-color-on-surface);
   word-break: break-word;
 }
 
@@ -109,9 +130,8 @@
 
 .kf-label {
   display: block;
-  font-size: 11px;
-  font-weight: 500;
-  color: #6c7086;
+  font: var(--md-sys-typescale-label-small);
+  color: var(--md-sys-color-on-surface-variant);
   margin-bottom: 4px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -119,77 +139,42 @@
 
 .kf-input {
   width: 100%;
-  background: #313244;
+  background: var(--md-sys-color-surface-variant);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
-  color: #cdd6f4;
-  font-size: 12px;
+  border-radius: var(--md-sys-shape-corner-medium);
+  color: var(--md-sys-color-on-surface);
   padding: 6px 10px;
   outline: none;
   transition: border-color 0.15s;
-  font-family: inherit;
+  font: var(--md-sys-typescale-body-medium);
 }
 .kf-input:focus {
-  border-color: rgba(137, 180, 250, 0.5);
+  border-color: rgba(167, 139, 250, 0.5);
 }
 .kf-input::placeholder {
-  color: #45475a;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 /* -----------------------------------------------------------------------
  * Comment section (collapsible)
  * ----------------------------------------------------------------------- */
-.kf-comment-toggle {
-  background: none;
-  border: none;
-  color: #6c7086;
-  font-size: 11px;
-  cursor: pointer;
-  padding: 0;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: color 0.15s;
-  font-family: inherit;
-}
-.kf-comment-toggle:hover {
-  color: #89b4fa;
-}
 
-.kf-comment-arrow {
-  display: inline-block;
-  transition: transform 0.2s;
-  font-style: normal;
-}
-.kf-comment-arrow.open {
-  transform: rotate(90deg);
-}
-
-#kf-comment-wrap {
-  display: none;
-  margin-bottom: 10px;
-}
-#kf-comment-wrap.open {
-  display: block;
-}
 
 .kf-textarea {
   width: 100%;
-  background: #313244;
+  background: var(--md-sys-color-surface-variant);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
-  color: #cdd6f4;
-  font-size: 12px;
+  border-radius: var(--md-sys-shape-corner-medium);
+  color: var(--md-sys-color-on-surface);
   padding: 6px 10px;
   outline: none;
   resize: vertical;
   min-height: 56px;
-  font-family: inherit;
   transition: border-color 0.15s;
+  font: var(--md-sys-typescale-body-medium);
 }
 .kf-textarea:focus {
-  border-color: rgba(137, 180, 250, 0.5);
+  border-color: rgba(167, 139, 250, 0.5);
 }
 
 /* -----------------------------------------------------------------------
@@ -203,10 +188,10 @@
 }
 
 .kf-mic {
-  background: #313244;
+  background: var(--md-sys-color-surface-variant);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
-  color: #6c7086;
+  border-radius: var(--md-sys-shape-corner-medium);
+  color: var(--md-sys-color-on-surface-variant);
   font-size: 16px;
   padding: 5px 9px;
   cursor: pointer;
@@ -214,28 +199,25 @@
   line-height: 1;
 }
 .kf-mic:hover {
-  color: #cdd6f4;
-  background: #45475a;
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface);
 }
 .kf-mic.active {
-  color: #f38ba8;
+  color: var(--md-sys-color-error);
   border-color: rgba(243, 139, 168, 0.4);
   background: rgba(243, 139, 168, 0.08);
 }
 
 .kf-save {
   flex: 1;
-  background: linear-gradient(135deg, #7c3aed, #6366f1);
+  background: var(--md-sys-color-primary);
   border: none;
-  border-radius: 6px;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
+  border-radius: var(--md-sys-shape-corner-full);
+  color: var(--md-sys-color-on-primary);
+  font: var(--md-sys-typescale-title-small);
   padding: 7px 16px;
   cursor: pointer;
   transition: opacity 0.15s, transform 0.1s;
-  font-family: inherit;
-  letter-spacing: 0.01em;
 }
 .kf-save:hover {
   opacity: 0.88;
@@ -248,7 +230,7 @@
   flex: 1;
   display: none;
   height: 29px; /* Matches Save button height */
-  border-radius: 6px;
+  border-radius: var(--md-sys-shape-corner-full);
   background: rgba(255, 255, 255, 0.1);
   position: relative;
   overflow: hidden;
@@ -273,36 +255,36 @@
 .kf-toast {
   margin-top: 12px;
   padding: 10px 12px;
-  border-radius: 6px;
-  font-size: 12px;
+  border-radius: var(--md-sys-shape-corner-medium);
+  font: var(--md-sys-typescale-body-medium);
   animation: kf-slide-in 0.2s ease-out;
 }
 
 .kf-toast-success {
-  background: rgba(166, 227, 161, 0.1);
-  border: 1px solid rgba(166, 227, 161, 0.3);
-  color: #a6e3a1;
+  background: rgba(46, 160, 67, 0.15);
+  border: 1px solid rgba(46, 160, 67, 0.4);
+  color: #7ee787;
 }
 
 .kf-toast-error {
-  background: rgba(243, 139, 168, 0.1);
-  border: 1px solid rgba(243, 139, 168, 0.3);
-  color: #f38ba8;
+  background: rgba(243, 139, 168, 0.15);
+  border: 1px solid rgba(243, 139, 168, 0.4);
+  color: var(--md-sys-color-error);
 }
 
 .kf-toast-info {
-  background: rgba(137, 180, 250, 0.1);
-  border: 1px solid rgba(137, 180, 250, 0.3);
+  background: rgba(137, 180, 250, 0.15);
+  border: 1px solid rgba(137, 180, 250, 0.4);
   color: #89b4fa;
 }
 
 .kf-toast-title {
-  font-weight: 600;
+  font: var(--md-sys-typescale-title-small);
   margin-bottom: 4px;
 }
 
 .kf-toast-desc {
-  color: #cdd6f4;
+  color: var(--md-sys-color-on-background);
   line-height: 1.4;
 }
 

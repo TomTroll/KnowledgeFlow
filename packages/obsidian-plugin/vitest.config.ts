@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@knowledgeflow/shared': path.resolve(__dirname, '../shared/src/index.ts'),
+      'obsidian': path.resolve(__dirname, 'src/tests/mocks/obsidian.ts'),
     },
   },
 });

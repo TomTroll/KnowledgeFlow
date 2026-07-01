@@ -26,12 +26,14 @@ export interface FlashValidationResult {
  * @param clipText    The user's selected text.
  * @param candidates  Top-5 candidate notes from cosine search.
  * @param apiKey      Gemini API key.
+ * @param userComment Optional user comment to guide the routing.
  * @returns           The Flash model's routing decision.
  */
 export async function validateWithFlash(
   clipText: string,
   candidates: FlashCandidate[],
   apiKey: string,
+  userComment?: string,
 ): Promise<FlashValidationResult> {
   if (!apiKey) {
     throw new Error('Gemini API key is not configured.');
@@ -41,8 +43,12 @@ export async function validateWithFlash(
     .map((c, i) => `${i + 1}. "${c.title}" (${c.path})\n   Excerpt: ${c.excerpt}`)
     .join('\n');
 
-  const prompt = `You are a knowledge routing assistant. A user has clipped the following text from the web and wants it inserted into the most relevant note in their Obsidian vault.
+  const commentSection = userComment
+    ? `\n**User Comment / Intent (CRITICAL Priority):**\n${userComment}\n`
+    : '';
 
+  const prompt = `You are a knowledge routing assistant. A user has clipped the following text from the web and wants it inserted into the most relevant note in their Obsidian vault.
+${commentSection}
 **Clipped text:**
 ${clipText}
 

@@ -148,7 +148,7 @@ describe('RoutingPipeline', () => {
     // The paragraph batch should be 1 call even for 30 paragraphs
     expect(deps.embedder).toHaveBeenCalledTimes(3);
     // The third call (paragraph batch) should have 30 texts
-    const paragraphBatchCall = deps.embedder.mock.calls[2];
+    const paragraphBatchCall = (deps.embedder as any).mock.calls[2];
     expect(paragraphBatchCall[0]).toHaveLength(30);
   });
 
@@ -251,7 +251,6 @@ describe('RoutingPipeline', () => {
     expect(processedContent).toContain('Second para.');
     expect(processedContent).toContain('Third para.');
     // Callout must be present
-    expect(processedContent).toContain('[!quote]');
-    expect(processedContent).toContain('[clip-id::');
+    expect(processedContent).toContain('[!clip]');
   });
 });

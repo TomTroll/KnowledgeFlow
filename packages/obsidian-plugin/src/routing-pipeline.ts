@@ -38,6 +38,7 @@ export interface RoutingDeps {
     clipText: string,
     candidates: FlashCandidate[],
     apiKey: string,
+    userComment?: string,
   ) => Promise<FlashValidationResult>;
   vectorStore: VectorStore;
   clipLog: ClipLog;
@@ -62,7 +63,10 @@ export class RoutingPipeline {
     // ------------------------------------------------------------------
     // Step 1: Embed the clip text (API call #1)
     // ------------------------------------------------------------------
-    const [clipEmbedding] = await this.deps.embedder([req.selectedText]);
+    const textToEmbed = req.comment
+      ? `User Comment (Priority for routing): ${req.comment}\n\nClip Context:\n${req.selectedText}`
+      : req.selectedText;
+    const [clipEmbedding] = await this.deps.embedder([textToEmbed]);
 
     // ------------------------------------------------------------------
     // Step 2 & 3: Local cosine search and LLM validation
@@ -129,6 +133,7 @@ export class RoutingPipeline {
           req.selectedText,
           candidates,
           settings.geminiKey,
+          req.comment,
         );
         justification = flashResult.justification;
         suggestedTitle = flashResult.suggestedTitle;
@@ -150,6 +155,7 @@ export class RoutingPipeline {
         req.selectedText,
         candidates,
         settings.geminiKey,
+        req.comment,
       );
       chosenPath = flashResult.chosenPath || topK[0].vaultPath;
       justification = flashResult.justification;

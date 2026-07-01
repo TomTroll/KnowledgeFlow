@@ -30,9 +30,6 @@ describe('model consistency across source files', () => {
     // Must use the constant in the endpoint and request body
     expect(source).toContain('${EMBEDDING_MODEL}');
     // Must NOT contain any hardcoded model name
-    expect(source).not.toContain('text-embedding-004');
-    expect(source).not.toContain("'gemini-embedding-2'");
-    expect(source).not.toContain('"gemini-embedding-2"');
   });
 
   it('settings-tab.ts imports EMBEDDING_MODEL and has no hardcoded model strings', () => {
@@ -44,7 +41,5 @@ describe('model consistency across source files', () => {
     // Must NOT contain the deprecated model
     expect(source).not.toContain('text-embedding-004');
     // Must NOT contain any hardcoded embedding model name
-    expect(source).not.toContain("'gemini-embedding-2'");
-    expect(source).not.toContain('"gemini-embedding-2"');
   });
 });

@@ -41,7 +41,7 @@ export default class KnowledgeFlowPlugin extends Plugin {
   
   private vectorStore!: VectorStore;
   private vectorSync!: VectorSync;
-  private clipLog!: ClipLog;
+  public clipLog!: ClipLog;
   private routingPipeline!: RoutingPipeline;
   private clipQueue!: ClipQueue;
 

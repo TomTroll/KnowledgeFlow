@@ -1,0 +1,69 @@
+/* Custom Callout for KnowledgeFlow Clips */
+.callout[data-callout="clip"] {
+  --callout-icon: "lucide-none";
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background-color: var(--background-secondary);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  margin: 16px 0;
+}
+
+/* Custom Image Icon */
+.callout[data-callout="clip"] > .callout-title > .callout-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.callout[data-callout="clip"] > .callout-title > .callout-icon svg {
+  display: none !important; /* Hide any default SVG */
+}
+
+.callout[data-callout="clip"] > .callout-title > .callout-icon::after {
+  content: " ";
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background-image: url('data:image/png;base64,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');
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+/* Style the title (Date/Time) - removed bottom border (separation line) */
+.callout[data-callout="clip"] .callout-title {
+  color: var(--text-muted);
+  font-size: 0.85em;
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+}
+
+/* Style the Tags to look like purple pills */
+.callout[data-callout="clip"] .callout-content .tag {
+  background-color: var(--color-purple, #7c3aed) !important;
+  color: white !important;
+  padding: 2px 8px !important;
+  border-radius: 12px !important;
+  font-size: 0.85em !important;
+  font-weight: 500 !important;
+  border: none !important;
+  text-decoration: none !important;
+}
+
+/* Hover effect for tags */
+.callout[data-callout="clip"] .callout-content .tag:hover {
+  filter: brightness(1.1);
+}
+
+/* Nested callout (More details) - slightly purple and borderless */
+.callout[data-callout="clip-details"] {
+  --callout-color: 124, 58, 237 !important; /* Purple */
+  background-color: rgba(124, 58, 237, 0.1) !important;
+  border: none !important;
+  box-shadow: none !important;
+  margin-top: 12px !important;
+}
+
+/* Hide the icon for the details callout */
+.callout[data-callout="clip-details"] > .callout-title > .callout-icon {
+  display: none !important;
+}

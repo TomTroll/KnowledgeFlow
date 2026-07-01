@@ -25,14 +25,20 @@ export function formatCallout(req: ClipRequest, clipId: string): string {
   const tags = req.tags.map(t => `#${t}`).join(' ');
 
   const lines = [
-    `> [!quote] Clip — ${formatted_time}`,
+    `> [!clip] ${formatted_time}`,
     `> ${req.selectedText}`,
     `>`,
     `> **Source:** [${req.pageTitle}](${req.sourceUrl})`,
-    `> **Tags:** ${tags}`,
-    `> **Comment:** ${req.comment}`,
-    //`> [clip-id:: ${clipId}]`,
+    `>`,
+    `> ${tags ? ' ' + tags : ''}`,
+    //`> > [!clip-details]- More details`,
   ];
+
+  //if (req.comment) {
+  //lines.push(`> > **Comment:** ${req.comment}`);
+  //}
+
+  //lines.push(`> > [clip-id:: ${clipId}]`);
 
   return lines.join('\n');
 }

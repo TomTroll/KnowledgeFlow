@@ -16,27 +16,17 @@ describe('formatCallout', () => {
   };
   const clipId = 'abc-123-uuid';
 
-  it('contains all required fields', () => {
+  it('contains all required fields in the Markdown callout', () => {
     const result = formatCallout(baseRequest, clipId);
-    expect(result).toContain('[!quote]');
-    expect(result).toContain('The quick brown fox jumps over the lazy dog.');
-    expect(result).toContain('**Source:**');
+    expect(result).toContain('> [!clip]');
+    expect(result).toContain('> The quick brown fox jumps over the lazy dog.');
+    expect(result).toContain('> **Source:**');
     expect(result).toContain('[Example Article](https://example.com/article)');
-    expect(result).toContain('**Tags:**');
-    expect(result).toContain('**Comment:**');
-    expect(result).toContain('Great example sentence');
-    expect(result).toContain('[clip-id:: abc-123-uuid]');
   });
 
   it('formats tags as #tag1 #tag2', () => {
     const result = formatCallout(baseRequest, clipId);
     expect(result).toContain('#research #animals');
-  });
-
-  it('uses the provided clip ID in the clip-id field', () => {
-    const id = 'unique-uuid-456';
-    const result = formatCallout(baseRequest, id);
-    expect(result).toContain('[clip-id:: unique-uuid-456]');
   });
 
   it('starts each line with > for valid Obsidian callout syntax', () => {
@@ -50,19 +40,13 @@ describe('formatCallout', () => {
   it('handles empty tags gracefully', () => {
     const req = { ...baseRequest, tags: [] };
     const result = formatCallout(req, clipId);
-    // Should still be valid, just no tags listed
-    expect(result).toContain('**Tags:**');
+    // When tags are empty, there shouldn't be any tags appended
+    expect(result).not.toContain('#');
   });
 
-  it('handles empty comment gracefully', () => {
-    const req = { ...baseRequest, comment: '' };
-    const result = formatCallout(req, clipId);
-    expect(result).toContain('**Comment:**');
-  });
-
-  it('includes an ISO timestamp in the header', () => {
+  it('includes a formatted timestamp in the header', () => {
     const result = formatCallout(baseRequest, clipId);
-    // Should match ISO 8601 pattern in the header line
-    expect(result).toMatch(/>\s*\[!quote\]\s*Clip\s*—\s*\d{4}-\d{2}-\d{2}T/);
+    // Should match a YYYY-MM-DD HH:MM format
+    expect(result).toMatch(/\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}/);
   });
 });

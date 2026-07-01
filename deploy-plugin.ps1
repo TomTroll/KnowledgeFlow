@@ -18,6 +18,9 @@ Write-Host "-> Copying to test-vault..." -ForegroundColor Cyan
 New-Item -ItemType Directory -Path $destDir -Force | Out-Null
 Copy-Item "$pluginDir\dist\main.js"  -Destination "$destDir\main.js"  -Force
 Copy-Item "$pluginDir\manifest.json" -Destination "$destDir\manifest.json" -Force
+if (Test-Path "$pluginDir\styles.css") {
+    Copy-Item "$pluginDir\styles.css" -Destination "$destDir\styles.css" -Force
+}
 
 Write-Host "[OK] Done! Reload the plugin in Obsidian:" -ForegroundColor Green
 Write-Host "   Settings → Community plugins → KnowledgeFlow → Disable → Enable"

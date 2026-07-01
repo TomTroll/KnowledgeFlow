@@ -5,14 +5,144 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KnowledgeFlow — Options</title>
   <style>
+    :root {
+      /* Obsidian aesthetic & Material 3 variables */
+      --md-sys-color-background: #1e1e1e;
+      --md-sys-color-surface: #2b2b2b;
+      --md-sys-color-surface-variant: #363636;
+      --md-sys-color-primary: #a78bfa; /* Brighter purple for better dark-mode legibility */
+      --md-sys-color-on-primary: #11111b;
+      --md-sys-color-on-background: #dcddde;
+      --md-sys-color-on-surface: #dcddde;
+      --md-sys-color-on-surface-variant: #999999;
+      --md-sys-color-error: #f38ba8;
+      --md-sys-color-on-error: #11111b;
+
+      --md-sys-shape-corner-small: 4px;
+      --md-sys-shape-corner-medium: 8px;
+      --md-sys-shape-corner-large: 12px;
+      --md-sys-shape-corner-full: 100px;
+      
+      --md-sys-typescale-body-medium: 400 14px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --md-sys-typescale-title-large: 600 22px/28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --md-sys-typescale-label-large: 500 14px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --md-sys-typescale-body-small: 400 12px/16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       width: 520px;
-      padding: 24px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 14px;
-      background: #1e1e2e;
-      color: #cdd6f4;
+      padding: 32px;
+      font: var(--md-sys-typescale-body-medium);
+      background: var(--md-sys-color-background);
+      color: var(--md-sys-color-on-background);
+    }
+    
+    h1 {
+      font: var(--md-sys-typescale-title-large);
+      margin-bottom: 24px;
+      color: var(--md-sys-color-on-background);
+    }
+
+    .field {
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font: var(--md-sys-typescale-label-large);
+      color: var(--md-sys-color-on-surface);
+    }
+
+    input {
+      background: var(--md-sys-color-surface-variant);
+      color: var(--md-sys-color-on-surface);
+      border: 1px solid transparent;
+      border-radius: var(--md-sys-shape-corner-medium);
+      padding: 12px 16px;
+      font: var(--md-sys-typescale-body-medium);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--md-sys-color-primary);
+      box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.25);
+    }
+
+    .hint {
+      font: var(--md-sys-typescale-body-small);
+      color: var(--md-sys-color-on-surface-variant);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    button {
+      font: var(--md-sys-typescale-label-large);
+      border-radius: var(--md-sys-shape-corner-full);
+      padding: 10px 24px;
+      cursor: pointer;
+      border: none;
+      outline: none;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    
+    button:active {
+      transform: scale(0.98);
+    }
+
+    #save-btn {
+      background: var(--md-sys-color-primary);
+      color: var(--md-sys-color-on-primary);
+    }
+
+    #save-btn:hover {
+      opacity: 0.9;
+    }
+
+    #test-btn {
+      background: var(--md-sys-color-surface-variant);
+      color: var(--md-sys-color-on-surface);
+    }
+    
+    #test-btn:hover {
+      background: #444; /* slightly lighter surface variant */
+    }
+
+    .status-message {
+      margin-top: 24px;
+      padding: 12px 16px;
+      border-radius: var(--md-sys-shape-corner-medium);
+      font: var(--md-sys-typescale-body-medium);
+      display: none;
+    }
+    
+    .status-message:not(:empty) {
+      display: block;
+    }
+
+    .status-success {
+      background: rgba(46, 160, 67, 0.15); /* generic green tint */
+      color: #7ee787;
+      border: 1px solid rgba(46, 160, 67, 0.4);
+    }
+
+    .status-error {
+      background: rgba(243, 139, 168, 0.15);
+      color: var(--md-sys-color-error);
+      border: 1px solid rgba(243, 139, 168, 0.4);
+    }
+
+    .status-info {
+      background: rgba(137, 180, 250, 0.15);
+      color: #89b4fa;
+      border: 1px solid rgba(137, 180, 250, 0.4);
     }
   </style>
 </head>

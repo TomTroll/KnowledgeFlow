@@ -46,10 +46,17 @@
 
     <div id="status-message" class="status-message" role="status" aria-live="polite"></div>
   `;
-    document.getElementById("save-btn").addEventListener("click", async () => {
+    const saveSettingsHandler = async () => {
       const newPort = parseInt(document.getElementById("port").value, 10);
       const newToken = document.getElementById("token").value.trim();
-      await saveSettings(newPort, newToken);
+      if (!isNaN(newPort)) {
+        await saveSettings(newPort, newToken);
+      }
+    };
+    document.getElementById("port").addEventListener("input", saveSettingsHandler);
+    document.getElementById("token").addEventListener("input", saveSettingsHandler);
+    document.getElementById("save-btn").addEventListener("click", async () => {
+      await saveSettingsHandler();
       showStatus("\u2705 Settings saved.", "success");
     });
     document.getElementById("test-btn").addEventListener("click", async () => {
@@ -59,11 +66,18 @@
       try {
         const status = await testConnection(currentPort, currentToken);
         showStatus(
-          `\u2705 Connected \u2014 Plugin v${status.pluginVersion}, ${status.cachedNoteCount} notes indexed.`,
+          `\u2705 Connected \u2014 Plugin v${status.pluginVersion}`,
           "success"
         );
       } catch (err) {
-        showStatus(`\u26D4 Connection failed: ${err.message}`, "error");
+        const errMsg = err.message;
+        if (errMsg.includes("HTTP 401") || errMsg.includes("HTTP 403")) {
+          showStatus("\u26D4 Connection failed: Invalid authorization token.", "error");
+        } else if (errMsg.includes("Failed to fetch") || errMsg.includes("NetworkError") || errMsg.includes("Load failed")) {
+          showStatus("\u26D4 Connection failed: The Obsidian server is unreachable. Check that Obsidian is open and the port is correct.", "error");
+        } else {
+          showStatus(`\u26D4 Connection failed: ${errMsg}`, "error");
+        }
       }
     });
   }

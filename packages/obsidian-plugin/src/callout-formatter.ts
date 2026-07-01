@@ -20,17 +20,18 @@ import type { ClipRequest } from '@knowledgeflow/shared';
  * @returns      The formatted callout block string.
  */
 export function formatCallout(req: ClipRequest, clipId: string): string {
-  const timestamp = new Date().toISOString();
+  const date = new Date();
+  const formatted_time = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
   const tags = req.tags.map(t => `#${t}`).join(' ');
 
   const lines = [
-    `> [!quote] Clip — ${timestamp}`,
+    `> [!quote] Clip — ${formatted_time}`,
     `> ${req.selectedText}`,
     `>`,
     `> **Source:** [${req.pageTitle}](${req.sourceUrl})`,
     `> **Tags:** ${tags}`,
     `> **Comment:** ${req.comment}`,
-    `> [clip-id:: ${clipId}]`,
+    //`> [clip-id:: ${clipId}]`,
   ];
 
   return lines.join('\n');
